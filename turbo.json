@@ -1,0 +1,21 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**"]
+    },
+    "protocol#build": {
+      "env": ["RPC_POLYGON_MUMBAI", "RPC_POLYGON_MAINNET", "PRIVATE_KEYS_TEST", "HARDHAT_FORK"]
+    },
+    "web#build": {
+      "env": ["NODE_ENV", "NEXT_PUBLIC_RPC_URL_GOERLI", "NEXT_PUBLIC_RPC_POLYGON_MUMBAI"]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "dev": {
+      "cache": false
+    }
+  }
+}
