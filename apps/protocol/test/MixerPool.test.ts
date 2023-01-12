@@ -20,6 +20,7 @@ const aavePoolArtifact = artifacts.readArtifactSync('IAavePool');
 const wTokenArtifact = artifacts.readArtifactSync('WTokenMock');
 const aTokenArtifact = artifacts.readArtifactSync('IAToken');
 
+const ONE_ETHER = parseEther('1');
 const DELTA_SEC = 5 * 60;
 const ONE_DAY = 24 * 60 * 60;
 const TOLERANCE = parseEther('0.0001');
@@ -162,7 +163,7 @@ describe.only('MixerPool', function () {
     });
 
     describe('Withdraws', function () {
-      it('simple deposit & withdraw', async function () {
+      it('single deposit & withdraw', async function () {
         const { pool, token, aToken } = await loadFixture(fixture);
 
         const keyPair = KeyPair.createRandom();
@@ -194,7 +195,42 @@ describe.only('MixerPool', function () {
         expect(userBalance).to.be.closeTo(withdrawAmount, TOLERANCE);
       }).timeout(80000);
 
-      it.only('partial withdraw', async function () {
+      it.only('multiple deposit & withdraw', async function () {
+        const { pool, token, aToken } = await loadFixture(fixture);
+
+        const keyPair = KeyPair.createRandom();
+        const amount = utils.parseEther('1');
+        const recipient = randomHex(20);
+
+        let [scaledAmount] = await pool.getAaveScaledAmountAdjusted(amount, DELTA_SEC);
+
+        const depositUtxo1 = new Utxo({ scaledAmount, keyPair });
+        const depositUtxo2 = new Utxo({ scaledAmount, keyPair });
+        await transactDeposit({ pool, amount, outputs: [depositUtxo1] });
+        await transactDeposit({ pool, amount, outputs: [depositUtxo2] });
+
+        await time.increase(1000 * ONE_DAY);
+
+        const totalScaledBalance = scaledAmount.mul(2);
+        const withdrawScaledAmount = totalScaledBalance;
+        const withdrawAmount = await pool.getBalance(withdrawScaledAmount);
+        const withdrawUtxo = new Utxo({
+          scaledAmount: totalScaledBalance.sub(withdrawScaledAmount),
+          keyPair,
+        });
+
+        await transactWithdraw({
+          pool,
+          inputs: [depositUtxo1, depositUtxo2],
+          outputs: [withdrawUtxo],
+          recipient,
+        });
+        const userBalance = await token.balanceOf(recipient);
+
+        expect(userBalance).to.be.closeTo(withdrawAmount, TOLERANCE);
+      }).timeout(80000);
+
+      it('partial withdraw', async function () {
         const { pool, token, aToken } = await loadFixture(fixture);
 
         const keyPair = KeyPair.createRandom();
@@ -249,193 +285,40 @@ describe.only('MixerPool', function () {
       }).timeout(80000);
     });
 
-    describe('Transfers', function () {});
+    describe('Transfers', function () {
+      it('simple deposit & transfer', async function () {
+        const { pool, token, aToken } = await loadFixture(fixture);
 
-    it('transfer works', async function () {
-      const { pool, token } = await loadFixture(fixture);
-      const keyPair = KeyPair.createRandom();
-      const amount = utils.parseEther('0.1');
-      let [scaledAmount, nextLiqIdx] = await pool.getAaveScaledAmountAdjusted(amount);
+        const keyPairAlice = KeyPair.createRandom();
+        const depositAmount = utils.parseEther('1');
+        const [depositScaledAmount] = await pool.getAaveScaledAmountAdjusted(ONE_ETHER, DELTA_SEC);
 
-      const depositUtxo = new Utxo({ scaledAmount, keyPair });
+        const depositUtxo = new Utxo({ scaledAmount: depositScaledAmount, keyPair: keyPairAlice });
+        await transactDeposit({ pool, amount: depositAmount, outputs: [depositUtxo] });
 
-      const { proofArgs, extData } = await prepareTransaction({
-        pool,
-        inputs: [],
-        outputs: [depositUtxo],
-        txType: 'deposit',
+        await time.increase(1000 * ONE_DAY);
+
+        // Alice sends to Bob
+        const keyPairBob = KeyPair.createRandom();
+        const transferScaledAmount = depositScaledAmount.div(2);
+        const transferAmount = await pool.getBalance(transferScaledAmount);
+        const transferUtxo = new Utxo({
+          scaledAmount: depositScaledAmount.sub(transferScaledAmount),
+          keyPair: keyPairBob,
+        });
+        const changeUtxo = new Utxo({
+          scaledAmount: depositScaledAmount.sub(transferScaledAmount),
+          keyPair: keyPairAlice,
+        });
+
+        await transactTransfer({
+          pool,
+          inputs: [depositUtxo],
+          outputs: [transferUtxo, changeUtxo],
+        });
+
+        // expect(userBalance).to.be.closeTo(transferAmount, TOLERANCE);
       });
-      await pool.deposit(amount, proofArgs, extData);
-
-      await mine(10000);
-
-      const transferUtxo = new Utxo({ scaledAmount: scaledAmount.div(2), keyPair });
-      const recipient = randomHex(20);
-      const { proofArgs: proofArgs2, extData: extData2 } = await prepareTransaction({
-        recipient: recipient,
-        pool,
-        inputs: [depositUtxo],
-        outputs: [transferUtxo],
-        txType: 'transfer',
-      });
-      await pool.transfer(proofArgs2, extData2);
     });
-
-    // it('should deposit, transact and withdraw', async function () {
-    //   const { pool, token } = await loadFixture(fixture);
-
-    //   // Alice deposits into pool
-    //   const aliceKeyPair = KeyPair.createRandom();
-    //   const aliceDepositAmount = utils.parseEther('0.1');
-    //   const aliceDepositUtxo = new Utxo({ amount: aliceDepositAmount, keyPair: aliceKeyPair });
-    //   await transaction({ pool, outputs: [aliceDepositUtxo] });
-
-    //   // Bob gives Alice address to send some eth inside the shielded pool
-    //   const bobKeyPair = new KeyPair(); // contains private and public keys
-    //   const bobAddress = bobKeyPair.address(); // contains only public key
-
-    //   // Alice sends some funds to Bob
-    //   const bobSendAmount = utils.parseEther('0.06');
-    //   const bobSendUtxo = new Utxo({
-    //     amount: bobSendAmount,
-    //     keyPair: KeyPair.fromAddress(bobAddress),
-    //   });
-    //   const aliceChangeUtxo = new Utxo({
-    //     amount: aliceDepositAmount.sub(bobSendAmount),
-    //     keyPair: aliceDepositUtxo.keyPair,
-    //   });
-    //   await transaction({
-    //     pool,
-    //     inputs: [aliceDepositUtxo],
-    //     outputs: [bobSendUtxo, aliceChangeUtxo],
-    //   });
-
-    //   // Bob parses chain to detect incoming funds
-    //   const filter = pool.filters.NewCommitment();
-    //   const fromBlock = await ethers.provider.getBlock('latest');
-    //   const events = await pool.queryFilter(filter, fromBlock.number);
-    //   let bobReceiveUtxo;
-    //   try {
-    //     bobReceiveUtxo = Utxo.decrypt(
-    //       bobKeyPair,
-    //       events[0].args?.encryptedOutput,
-    //       events[0].args?.index,
-    //     );
-    //   } catch (e) {
-    //     // we try to decrypt another output here because it shuffles outputs before sending to blockchain
-    //     bobReceiveUtxo = Utxo.decrypt(
-    //       bobKeyPair,
-    //       events[1].args?.encryptedOutput,
-    //       events[1].args?.index,
-    //     );
-    //   }
-    //   expect(bobReceiveUtxo.amount).to.be.equal(bobSendAmount);
-
-    //   // Bob withdraws a part of his funds from the shielded pool
-    //   const bobWithdrawAmount = utils.parseEther('0.05');
-    //   const bobEthAddress = '0xDeaD00000000000000000000000000000000BEEf';
-    //   const bobChangeUtxo = new Utxo({
-    //     amount: bobSendAmount.sub(bobWithdrawAmount),
-    //     keyPair: bobKeyPair,
-    //   });
-    //   await transaction({
-    //     pool,
-    //     inputs: [bobReceiveUtxo],
-    //     outputs: [bobChangeUtxo],
-    //     recipient: bobEthAddress,
-    //   });
-
-    //   const bobBalance = await ethers.provider.getBalance(bobEthAddress);
-    //   expect(bobBalance).to.be.equal(bobWithdrawAmount);
-    // }).timeout(80000);
-
-    // it('should work with 16 inputs', async function () {
-    //   const { pool } = await loadFixture(fixture);
-
-    //   const keyPair = KeyPair.createRandom();
-    //   const depositAmount = utils.parseEther('0.07');
-    //   const depositUtxo = new Utxo({ amount: depositAmount, keyPair });
-    //   await transaction({
-    //     pool,
-    //     inputs: [Utxo.zero(), Utxo.zero(), Utxo.zero()],
-    //     outputs: [depositUtxo],
-    //   });
-    // });
-
-    // it.only('withdraw should work with relayers', async function () {
-    //   const { pool, token } = await loadFixture(fixture);
-
-    //   const [sender, relayer] = await ethers.getSigners();
-
-    //   const recipientAddress = randomHex(20);
-
-    //   // Alice deposits into pool
-    //   const aliceKeyPair = KeyPair.createRandom();
-    //   const aliceDepositAmount = utils.parseEther('0.5');
-    //   const aliceDepositUtxo = new Utxo({ amount: aliceDepositAmount, keyPair: aliceKeyPair });
-    //   await transaction({ pool, outputs: [aliceDepositUtxo] });
-
-    //   // Alice withdraws
-    //   const relayerFee = utils.parseEther('0.01');
-    //   const aliceWithdrawAmount = utils.parseEther('0.2');
-    //   const total = aliceWithdrawAmount.add(relayerFee);
-
-    //   const aliceChangeAmount = aliceDepositAmount.sub(total);
-    //   const aliceChangeUtxo = new Utxo({ amount: aliceChangeAmount, keyPair: aliceKeyPair });
-
-    //   await transaction({
-    //     pool,
-    //     inputs: [aliceDepositUtxo],
-    //     outputs: [aliceChangeUtxo],
-    //     fee: relayerFee,
-    //     relayer: relayer.address,
-    //     recipient: recipientAddress,
-    //   });
-
-    //   const relayerBal = await token.balanceOf(relayer.address);
-    //   const recipientBal = await ethers.provider.getBalance(recipientAddress);
-
-    //   expect(recipientBal).to.be.equal(aliceWithdrawAmount);
-    //   expect(relayerBal).to.be.equal(relayerFee);
-    // });
-
-    // it.only('transfer should work with relayers', async function () {
-    //   const { pool, token } = await loadFixture(fixture);
-
-    //   const [sender, relayer] = await ethers.getSigners();
-
-    //   const recipientAddress = randomHex(20);
-
-    //   // Alice deposits into pool
-    //   const aliceKeyPair = KeyPair.createRandom();
-    //   const aliceDepositAmount = utils.parseEther('0.5');
-    //   const aliceDepositUtxo = new Utxo({ amount: aliceDepositAmount, keyPair: aliceKeyPair });
-    //   await transaction({ pool, outputs: [aliceDepositUtxo] });
-
-    //   const bobKeyPair = KeyPair.createRandom();
-
-    //   // Alice sends to bob
-    //   const relayerFee = utils.parseEther('0.01');
-    //   const bobReceiveAmount = utils.parseEther('0.2');
-    //   const total = bobReceiveAmount.add(relayerFee);
-
-    //   const aliceChangeAmount = aliceDepositAmount.sub(total);
-    //   const aliceChangeUtxo = new Utxo({ amount: aliceChangeAmount, keyPair: aliceKeyPair });
-    //   const bobReceiveUtxo = new Utxo({ amount: bobReceiveAmount, keyPair: bobKeyPair });
-
-    //   await transaction({
-    //     pool,
-    //     inputs: [aliceDepositUtxo],
-    //     outputs: [aliceChangeUtxo, bobReceiveUtxo],
-    //     fee: relayerFee,
-    //     relayer: relayer.address,
-    //     recipient: recipientAddress,
-    //   });
-
-    //   const relayerBal = await token.balanceOf(relayer.address);
-    //   // const recipientBal = await ethers.provider.getBalance(recipientAddress);
-    //   // expect(recipientBal).to.be.equal(bobReceiveAmount);
-    //   expect(relayerBal).to.be.equal(relayerFee);
-    // });
   });
 });
