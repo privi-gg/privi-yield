@@ -215,6 +215,6 @@ export async function transactTransfer({ pool, ...rest }: any) {
     ...rest,
   });
 
-  const tx = await pool.withdraw(proofArgs, extData);
+  const tx = await pool.transfer(proofArgs, extData);
   return tx.wait();
 }
