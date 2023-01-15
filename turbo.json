@@ -9,7 +9,12 @@
       "env": ["RPC_POLYGON_MUMBAI", "RPC_POLYGON_MAINNET", "PRIVATE_KEYS_TEST", "HARDHAT_FORK"]
     },
     "web#build": {
-      "env": ["NODE_ENV", "NEXT_PUBLIC_RPC_URL_GOERLI", "NEXT_PUBLIC_RPC_POLYGON_MUMBAI"]
+      "env": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_RPC_GOERLI",
+        "NEXT_PUBLIC_RPC_POLYGON_MUMBAI",
+        "NEXT_PUBLIC_TEST_PRIVATE_KEY"
+      ]
     },
     "lint": {
       "outputs": []

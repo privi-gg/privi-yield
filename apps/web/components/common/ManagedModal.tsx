@@ -1,4 +1,5 @@
 import { Modal, ModalOverlay, ModalContent, ModalBody, ModalCloseButton } from '@chakra-ui/react';
+import { AccountLogIn, AccountRegister } from 'components/account';
 
 import { useUI } from 'contexts/ui';
 
@@ -9,9 +10,9 @@ const ManagedModal: React.FC = () => {
     <Modal isOpen={isModalOpen} onClose={closeModal} size="md">
       <ModalOverlay />
       <ModalContent>
-        <ModalCloseButton />
-        <ModalBody p={8}>
-          {/* {modalView === 'VIEW_1' && <VIEW1 />} */}
+        <ModalBody p={0}>
+          {modalView === 'ACCOUNT_REGISTER' && <AccountRegister />}
+          {modalView === 'ACCOUNT_LOGIN' && <AccountLogIn />}
           {/* {modalView === 'VIEW_2' && <VIEW2 />} */}
         </ModalBody>
       </ModalContent>

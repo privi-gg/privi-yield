@@ -13,7 +13,7 @@ interface State {
   modalData: any;
 }
 
-type ModalView = 'VIEW_1' | 'VIEW_2';
+type ModalView = 'ACCOUNT_REGISTER' | 'VIEW_2';
 
 type Action =
   | {
