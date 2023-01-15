@@ -60,15 +60,8 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
 
     (address aavePoolAddress, , uint256 nextLiquidityIndex) = getAavePoolAndReserveData();
 
-    // uint256 liquidityIndex = uint256(aaveReserveData.liquidityIndex);
     uint256 calcScaledAmount = amount.rayDiv(nextLiquidityIndex);
     uint256 extScaledAmount = extData.scaledAmount;
-
-    // console.log(calcScaledAmount);
-    // console.log(extScaledAmount);
-
-    // console.log(nextLiquidityIndex);
-    // console.log(block.timestamp);
 
     require(extScaledAmount <= calcScaledAmount, 'Illegal scaled extScaledAmount');
 
@@ -121,26 +114,6 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
       token.safeTransfer(extData.relayer, fee);
     }
   }
-
-  // function transact(DataTypes.ProofArgs calldata args, DataTypes.ExtData calldata extData) public {
-  //   if (extData.extAmount > 0) {
-  //     uint256 extAmount = uint256(extData.extAmount);
-  //     uint256 extScaledAmount = uint256(extData.scaledAmount);
-
-  //     require(extAmount <= maxDepositAmount, 'Amount greater than max allowed');
-
-  //     uint128 liquidityIndex = aavePool.getReserveData(address(token)).liquidityIndex;
-  //     uint256 calcScaledAmount = extAmount.rayDiv(uint256(liquidityIndex));
-
-  //     require(extScaledAmount <= calcScaledAmount, 'Illegal scaled extAmount');
-
-  //     token.transferFrom(msg.sender, address(this), extAmount);
-  //     token.approve(address(aavePool), extAmount);
-  //     aavePool.supply(address(token), extAmount, address(this), 0);
-  //   }
-
-  //   _transact(args, extData);
-  // }
 
   function getAavePoolAndReserveData()
     public
