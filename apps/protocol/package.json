@@ -4,9 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "circuit:build": "./scripts/buildCircuit.sh 2 && ./scripts/buildCircuit.sh 16",
     "build": "hardhat compile",
-    "test": "hardhat test",
-    "circuit:build": "./scripts/buildCircuit.sh 2 && ./scripts/buildCircuit.sh 16"
+    "test": "cross-env HARDHAT_FORK=true hardhat test",
+    "deploy:test": "cross-env HARDHAT_FORK=true hardhat deploy --network hardhat",
+    "deploy:goerli": "hardhat deploy --network goerli",
+    "deploy:mumbai": "hardhat deploy --network mumbai"
   },
   "author": "",
   "license": "ISC",
@@ -36,6 +39,7 @@
     "chai": "^4.2.0",
     "ethers": "^5.4.7",
     "hardhat": "^2.11.2",
+    "hardhat-deploy": "^0.11.22",
     "hardhat-gas-reporter": "^1.0.8",
     "prettier": "^2.7.1",
     "solidity-coverage": "^0.8.0",

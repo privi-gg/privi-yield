@@ -1,5 +1,6 @@
 import { HardhatUserConfig } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
+import 'hardhat-deploy';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -18,12 +19,19 @@ const config: HardhatUserConfig = {
       forking: {
         url: rpcPolygonMainnet,
         blockNumber: 28876152,
+        enabled: forkEnabled,
       },
     },
     mumbai: {
       url: rpcPolygonMumbai,
       accounts: privateKeys,
     },
+  },
+  namedAccounts: {
+    deployer: 0,
+  },
+  paths: {
+    deploy: './scripts/deploy',
   },
 };
 
