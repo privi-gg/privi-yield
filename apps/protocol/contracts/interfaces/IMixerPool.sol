@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import {DataTypes} from '../types/DataTypes.sol';
+import {DataTypes} from '../libraries/DataTypes.sol';
 
 interface IMixerPool {
   event NewCommitment(bytes32 commitment, uint256 leafIndex, bytes encryptedOutput);
