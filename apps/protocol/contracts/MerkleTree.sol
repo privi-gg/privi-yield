@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-// import '@openzeppelin/contracts/proxy/utils/Initializable.sol';
 import './interfaces/IHasher.sol';
+import {Errors} from './libraries/Errors.sol';
 
 contract MerkleTree {
   uint256 public constant FIELD_SIZE =
@@ -24,12 +24,12 @@ contract MerkleTree {
   uint32 public nextIndex;
 
   constructor(uint256 numLevels_, address hasher_) {
-    require(numLevels_ > 0, 'Levels should be greater than zero');
-    require(numLevels_ < 32, 'Levels should be less than 32');
+    if (numLevels_ == 0 || numLevels_ >= 32) revert Errors.InvalidMerkleTreeDepth(numLevels_);
+
     numLevels = numLevels_;
     hasher = IHasher(hasher_);
 
-    for (uint256 i = 0; i < numLevels_; i++) {
+    for (uint256 i = 0; i < numLevels_; ++i) {
       filledSubtrees[i] = zeros(i);
     }
 
@@ -37,8 +37,8 @@ contract MerkleTree {
   }
 
   function hashLeftRight(bytes32 left, bytes32 right) public view returns (bytes32) {
-    require(uint256(left) < FIELD_SIZE, 'Left should be inside the field');
-    require(uint256(right) < FIELD_SIZE, 'Right should be inside the field');
+    if (uint256(left) >= FIELD_SIZE) revert Errors.InputOutOfFieldSize(left);
+    if (uint256(right) >= FIELD_SIZE) revert Errors.InputOutOfFieldSize(right);
 
     bytes32[2] memory input;
     input[0] = left;
@@ -49,7 +49,8 @@ contract MerkleTree {
 
   function _insert(bytes32 leaf1, bytes32 leaf2) internal returns (uint32 index) {
     uint32 _nextIndex = nextIndex;
-    require(_nextIndex != 2**numLevels, 'Merkle tree is full');
+
+    if (_nextIndex >= 2**numLevels) revert Errors.MerkleTreeFull();
 
     uint32 currentIndex = _nextIndex / 2;
 
@@ -100,9 +101,6 @@ contract MerkleTree {
     return roots[currentRootIndex];
   }
 
-  /**
-   * @dev Zero elements for poseidon hash based merkle tree
-   */
   function zeros(uint256 i) public pure returns (bytes32) {
     if (i == 0) return 0x2fe54c60d3acabf3343a35b6eba15db4821b340f76e741e2249685ed4899af6c;
     else if (i == 1) return 0x13e37f2d6cb86c78ccc1788607c2b199788c6bb0a615a21f2e7a8e88384222f8;

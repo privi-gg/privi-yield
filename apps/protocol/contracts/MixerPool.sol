@@ -10,9 +10,10 @@ import './interfaces/IAavePool.sol';
 import './interfaces/IAavePoolAddressProvider.sol';
 import './interfaces/IAToken.sol';
 import './MerkleTree.sol';
-import {DataTypes} from './types/DataTypes.sol';
-import {WadRayMath} from './utils/WadRayMath.sol';
-import {MathUtils} from './utils/MathUtils.sol';
+import {DataTypes} from './libraries/DataTypes.sol';
+import {WadRayMath} from './libraries/WadRayMath.sol';
+import {MathUtils} from './libraries/MathUtils.sol';
+import {Errors} from './libraries/Errors.sol';
 
 import 'hardhat/console.sol';
 
@@ -56,14 +57,14 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
     DataTypes.ProofArgs calldata args,
     DataTypes.ExtData calldata extData
   ) public {
-    require(amount <= maxDepositAmount, 'Amount greater than max allowed');
+    if (amount > maxDepositAmount) revert Errors.DepositAmountTooHigh(amount, maxDepositAmount);
 
     (address aavePoolAddress, , uint256 nextLiquidityIndex) = getAavePoolAndReserveData();
 
     uint256 calcScaledAmount = amount.rayDiv(nextLiquidityIndex);
     uint256 extScaledAmount = extData.scaledAmount;
 
-    require(extScaledAmount <= calcScaledAmount, 'Illegal scaled extScaledAmount');
+    if (calcScaledAmount < extScaledAmount) revert Errors.InvalidScaledAmount(extScaledAmount);
 
     token.safeTransferFrom(msg.sender, address(this), amount);
     token.approve(aavePoolAddress, amount);
@@ -73,7 +74,8 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
   }
 
   function withdraw(DataTypes.ProofArgs calldata args, DataTypes.ExtData calldata extData) public {
-    require(extData.recipient != address(0), 'Cannot withdraw to zero address');
+    if (extData.recipient == address(0)) revert Errors.ZeroRecipientAddress();
+
     _transact(args, extData, DataTypes.TxType.WITHDRAW);
 
     (
@@ -268,35 +270,30 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
     DataTypes.ExtData calldata extData,
     DataTypes.TxType txType
   ) internal nonReentrant {
-    require(isKnownRoot(args.root), 'Invalid merkle root');
-    for (uint256 i = 0; i < args.inputNullifiers.length; i++) {
-      require(!isSpent(args.inputNullifiers[i]), 'Input is already spent');
+    if (!isKnownRoot(args.root)) revert Errors.InvalidMerkleRoot();
+
+    for (uint256 i = 0; i < args.inputNullifiers.length; ++i) {
+      if (isSpent(args.inputNullifiers[i])) revert Errors.InputNullifierAlreadySpent();
     }
-    require(
-      uint256(args.extDataHash) == uint256(keccak256(abi.encode(extData))) % FIELD_SIZE,
-      'Incorrect external data hash'
+
+    uint256 calcExtDataHash = uint256(keccak256(abi.encode(extData))) % FIELD_SIZE;
+    if (calcExtDataHash != uint256(args.extDataHash)) revert Errors.InvalidExtDataHash();
+
+    uint256 calcPublicScaledAmount = getPublicScaledAmount(
+      txType,
+      extData.scaledAmount,
+      extData.scaledFee
     );
-    require(
-      args.publicScaledAmount ==
-        getPublicScaledAmount(txType, extData.scaledAmount, extData.scaledFee),
-      'Invalid public amount'
-    );
-    require(verifyProof(args), 'Invalid transaction proof');
+    if (calcPublicScaledAmount != args.publicScaledAmount)
+      revert Errors.InvalidPublicScaledAmount();
+
+    if (!verifyProof(args)) revert Errors.InvalidTxProof();
 
     for (uint256 i = 0; i < args.inputNullifiers.length; ++i) {
       nullifierHashes[args.inputNullifiers[i]] = true;
     }
 
     _insert(args.outputCommitments[0], args.outputCommitments[1]);
-
-    // if (extData.extAmount < 0) {
-    //   require(extData.recipient != address(0), 'Cannot withdraw to zero address');
-    //   token.transfer(extData.recipient, uint256(-extData.extAmount));
-    // }
-
-    // if (extData.fee > 0) {
-    //   token.transfer(extData.relayer, extData.fee);
-    // }
 
     emit NewCommitment(args.outputCommitments[0], nextIndex - 2, extData.encryptedOutput1);
     emit NewCommitment(args.outputCommitments[1], nextIndex - 1, extData.encryptedOutput2);
