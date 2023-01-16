@@ -15,8 +15,6 @@ import {WadRayMath} from './libraries/WadRayMath.sol';
 import {MathUtils} from './libraries/MathUtils.sol';
 import {Errors} from './libraries/Errors.sol';
 
-import 'hardhat/console.sol';
-
 contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
   using WadRayMath for uint256;
   using SafeERC20 for IERC20;
@@ -64,7 +62,9 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
     uint256 calcScaledAmount = amount.rayDiv(nextLiquidityIndex);
     uint256 extScaledAmount = extData.scaledAmount;
 
-    if (calcScaledAmount < extScaledAmount) revert Errors.InvalidScaledAmount(extScaledAmount);
+    if (extScaledAmount > calcScaledAmount) revert Errors.InvalidScaledAmount(extScaledAmount);
+
+    scaledDust += calcScaledAmount - extScaledAmount;
 
     token.safeTransferFrom(msg.sender, address(this), amount);
     token.approve(aavePoolAddress, amount);
@@ -172,14 +172,6 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
     uint256 nextLiquidityIndex = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
     uint256 scaledAmount = amount.rayDiv(nextLiquidityIndex);
     return (scaledAmount, nextLiquidityIndex);
-  }
-
-  function getAaveReserveData() public view returns (DataTypes.AaveReserveData memory) {
-    (address aavePoolAddress, , ) = getAavePoolAndReserveData();
-    DataTypes.AaveReserveData memory reserveData = IAavePool(aavePoolAddress).getReserveData(
-      address(token)
-    );
-    return reserveData;
   }
 
   function isSpent(bytes32 nullifierHash) public view returns (bool) {
