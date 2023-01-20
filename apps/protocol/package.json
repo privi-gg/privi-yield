@@ -23,7 +23,7 @@
     "xcircomlib": "npm:circomlib@^0.5.5"
   },
   "devDependencies": {
-    "@praave/utils": "*",
+    "@privi-yield/common": "*",
     "@ethersproject/abi": "^5.4.7",
     "@ethersproject/providers": "^5.4.7",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
