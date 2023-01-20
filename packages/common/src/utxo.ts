@@ -44,7 +44,7 @@ export class Utxo {
     if (!this._nullifier) {
       if (
         this.scaledAmount > 0 &&
-        (!isFinite(this.leafIndex as number) || !this.keyPair.privateKey === undefined)
+        (!isFinite(this.leafIndex as number) || !this.keyPair.privateKey)
       ) {
         throw new Error('Can not compute nullifier without utxo index or private key');
       }
