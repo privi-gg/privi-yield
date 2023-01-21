@@ -287,8 +287,8 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
 
     _insert(args.outputCommitments[0], args.outputCommitments[1]);
 
-    emit NewCommitment(args.outputCommitments[0], nextIndex - 2, extData.encryptedOutput1);
-    emit NewCommitment(args.outputCommitments[1], nextIndex - 1, extData.encryptedOutput2);
+    emit NewCommitment(args.outputCommitments[0], nextLeafIndex - 2, extData.encryptedOutput1);
+    emit NewCommitment(args.outputCommitments[1], nextLeafIndex - 1, extData.encryptedOutput2);
     for (uint256 i = 0; i < args.inputNullifiers.length; i++) {
       emit NewNullifier(args.inputNullifiers[i]);
     }
