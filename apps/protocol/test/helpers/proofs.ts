@@ -1,40 +1,10 @@
-import { ethers } from 'hardhat';
 import { Contract } from 'ethers';
 import MerkleTree from 'fixed-merkle-tree';
 import { FIELD_SIZE, TREE_HEIGHT, ZERO_VALUE } from './constants';
-import { generateSnarkProofSolidity, poseidonHash, toFixedHex } from './utils';
-import { Utxo } from '@praave/utils';
-
-const { utils, BigNumber } = ethers;
-
-function hashExtData({
-  recipient,
-  scaledAmount,
-  relayer,
-  scaledFee,
-  encryptedOutput1,
-  encryptedOutput2,
-}: any) {
-  const abi = new utils.AbiCoder();
-
-  const encodedData = abi.encode(
-    [
-      'tuple(address recipient,uint256 scaledAmount,address relayer,uint256 scaledFee,bytes encryptedOutput1,bytes encryptedOutput2)',
-    ],
-    [
-      {
-        recipient: toFixedHex(recipient, 20),
-        scaledAmount: toFixedHex(scaledAmount),
-        relayer: toFixedHex(relayer, 20),
-        scaledFee: toFixedHex(scaledFee),
-        encryptedOutput1,
-        encryptedOutput2,
-      },
-    ],
-  );
-  const hash = utils.keccak256(encodedData);
-  return BigNumber.from(hash).mod(FIELD_SIZE);
-}
+import { poseidonHash, toFixedHex } from './utils';
+import { CircuitPath, SupplyProver } from '@privi-yield/common';
+//@ts-ignore
+import * as snarkJs from 'snarkjs';
 
 async function buildMerkleTree(pool: Contract) {
   const filter = pool.filters.NewCommitment();
@@ -49,146 +19,26 @@ async function buildMerkleTree(pool: Contract) {
   });
 }
 
-async function generateProof({
-  inputs,
-  outputs,
-  tree,
-  scaledAmount,
-  txType,
-  scaledFee,
-  recipient,
-  relayer,
-}: any) {
-  const circuit = inputs.length === 16 ? 'transaction16' : 'transaction2';
+const tx2CircuitPath: CircuitPath = {
+  circuit: `./artifacts/circuits/transaction2_js/transaction2.wasm`,
+  zKey: `./artifacts/circuits/transaction2.zkey`,
+};
 
-  const inputPathIndices = [];
-  const inputPathElements = [];
-  for (const input of inputs) {
-    if (input.scaledAmount > 0) {
-      input.leafIndex = tree.indexOf(toFixedHex(input.commitment));
-      if (input.leafIndex < 0) {
-        throw new Error(`Input commitment ${toFixedHex(input.commitment)} was not found`);
-      }
-      inputPathIndices.push(input.leafIndex);
-      inputPathElements.push(tree.path(input.leafIndex).pathElements);
-    } else {
-      inputPathIndices.push(0);
-      inputPathElements.push(new Array(tree.levels).fill(0));
-    }
-  }
-
-  const extData = {
-    recipient: toFixedHex(recipient, 20),
-    scaledAmount: toFixedHex(scaledAmount),
-    relayer: toFixedHex(relayer, 20),
-    scaledFee: toFixedHex(scaledFee),
-    encryptedOutput1: outputs[0].encrypt(),
-    encryptedOutput2: outputs[1].encrypt(),
-  };
-
-  let publicScaledAmount;
-  if (txType === 'deposit') {
-    publicScaledAmount = BigNumber.from(scaledAmount);
-  } else if (txType === 'withdraw') {
-    publicScaledAmount = BigNumber.from(FIELD_SIZE).sub(
-      BigNumber.from(scaledAmount).add(scaledFee),
-    );
-    // publicScaledAmount = BigNumber.from(scaledAmount).add(scaledFee);
-  } else if (txType === 'transfer') {
-    publicScaledAmount = BigNumber.from(scaledFee);
-  } else {
-    throw new Error(`Invalid txType: ${txType}`);
-  }
-
-  const extDataHash = hashExtData(extData);
-  const input = {
-    root: tree.root,
-    publicScaledAmount: publicScaledAmount.toString(),
-    extDataHash,
-    inputNullifier: inputs.map((x: Utxo) => x.nullifier),
-    // data for 2 transaction inputs
-    inScaledAmount: inputs.map((x: Utxo) => x.scaledAmount),
-    inPrivateKey: inputs.map((x: Utxo) => x.keyPair.privateKey),
-    inBlinding: inputs.map((x: Utxo) => x.blinding),
-    inPathIndices: inputPathIndices,
-    inPathElements: inputPathElements,
-    // data for 2 transaction outputs
-    outputCommitment: outputs.map((x: Utxo) => x.commitment),
-    outScaledAmount: outputs.map((x: Utxo) => x.scaledAmount),
-    outPubkey: outputs.map((x: Utxo) => x.keyPair.publicKey),
-    outBlinding: outputs.map((x: Utxo) => x.blinding),
-  };
-
-  const { proof } = await generateSnarkProofSolidity(input, circuit);
-
-  const proofArgs = {
-    proof,
-    root: toFixedHex(input.root),
-    inputNullifiers: inputs.map((x: Utxo) => toFixedHex(x.nullifier as string)),
-    outputCommitments: outputs.map((x: Utxo) => toFixedHex(x.commitment)),
-    publicScaledAmount: toFixedHex(input.publicScaledAmount),
-    extDataHash: toFixedHex(extDataHash),
-  };
-
-  return {
-    extData,
-    proofArgs,
-  };
-}
-
-export async function prepareTransaction({
-  pool,
-  inputs = [],
-  outputs = [],
-  txType = 'deposit',
-  scaledFee = 0,
-  recipient = 0,
-  relayer = 0,
-}: any) {
-  if (inputs.length > 16 || outputs.length > 2) {
-    throw new Error('Incorrect inputs/outputs count');
-  }
-  while (inputs.length !== 2 && inputs.length < 16) {
-    inputs.push(Utxo.zero());
-  }
-  while (outputs.length < 2) {
-    outputs.push(Utxo.zero());
-  }
-
-  let scaledAmount;
-  if (txType === 'deposit') {
-    scaledAmount = BigNumber.from(scaledFee)
-      .add(outputs.reduce((sum: any, x: any) => sum.add(x.scaledAmount), BigNumber.from(0)))
-      .sub(inputs.reduce((sum: any, x: any) => sum.add(x.scaledAmount), BigNumber.from(0)));
-  } else {
-    scaledAmount = inputs
-      .reduce((sum: any, x: any) => sum.add(x.scaledAmount), BigNumber.from(0))
-      .sub(outputs.reduce((sum: any, x: any) => sum.add(x.scaledAmount), BigNumber.from(0)))
-      .sub(BigNumber.from(scaledFee));
-  }
-
-  const tree = await buildMerkleTree(pool);
-
-  const { proofArgs, extData } = await generateProof({
-    inputs,
-    outputs,
-    tree,
-    scaledAmount,
-    txType,
-    scaledFee,
-    recipient,
-    relayer,
-  });
-
-  return {
-    proofArgs,
-    extData,
-  };
-}
+const tx16CircuitPath: CircuitPath = {
+  circuit: `./artifacts/circuits/transaction16_js/transaction16.wasm`,
+  zKey: `./artifacts/circuits/transaction16.zkey`,
+};
 
 export async function transactDeposit({ pool, amount, ...rest }: any) {
-  const { proofArgs, extData } = await prepareTransaction({
-    pool,
+  const merkleTree = await buildMerkleTree(pool);
+  const prover = new SupplyProver({
+    snarkJs,
+    fieldSize: FIELD_SIZE,
+    circuits: { transact2: tx2CircuitPath, transact16: tx16CircuitPath },
+    merkleTree,
+  });
+
+  const { proofArgs, extData } = await prover.prepareTxProof({
     txType: 'deposit',
     ...rest,
   });
@@ -198,8 +48,15 @@ export async function transactDeposit({ pool, amount, ...rest }: any) {
 }
 
 export async function transactWithdraw({ pool, ...rest }: any) {
-  const { proofArgs, extData } = await prepareTransaction({
-    pool,
+  const merkleTree = await buildMerkleTree(pool);
+  const prover = new SupplyProver({
+    snarkJs,
+    fieldSize: FIELD_SIZE,
+    circuits: { transact2: tx2CircuitPath, transact16: tx16CircuitPath },
+    merkleTree,
+  });
+
+  const { proofArgs, extData } = await prover.prepareTxProof({
     txType: 'withdraw',
     ...rest,
   });
@@ -209,8 +66,15 @@ export async function transactWithdraw({ pool, ...rest }: any) {
 }
 
 export async function transactTransfer({ pool, ...rest }: any) {
-  const { proofArgs, extData } = await prepareTransaction({
-    pool,
+  const merkleTree = await buildMerkleTree(pool);
+  const prover = new SupplyProver({
+    snarkJs,
+    fieldSize: FIELD_SIZE,
+    circuits: { transact2: tx2CircuitPath, transact16: tx16CircuitPath },
+    merkleTree,
+  });
+
+  const { proofArgs, extData } = await prover.prepareTxProof({
     txType: 'transfer',
     ...rest,
   });
