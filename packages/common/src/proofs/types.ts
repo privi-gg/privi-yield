@@ -1,6 +1,5 @@
-import { BigNumberish, Contract } from 'ethers';
+import { BigNumberish } from 'ethers';
 import MerkleTree, { PartialMerkleTree } from 'fixed-merkle-tree';
-import { KeyPair } from '../keyPair';
 import { Utxo } from '../utxo';
 
 export type TxType = 'supply' | 'withdraw' | 'transfer';
@@ -42,33 +41,4 @@ export type PrepareTxArgs = {
   scaledFee: BigNumberish;
   relayer: BigNumberish;
   recipient?: BigNumberish;
-};
-
-export type PrepareDepositArgs = {
-  pool: Contract;
-  amount: BigNumberish;
-  keyPairs: {
-    spender: KeyPair;
-    receiver: KeyPair;
-  };
-};
-
-export type PrepareWithdrawArgs = {
-  pool: Contract;
-  amount: BigNumberish;
-  spenderKeyPair: KeyPair;
-  receiverAddress: BigNumberish;
-  relayer?: BigNumberish;
-  fee?: BigNumberish;
-};
-
-export type PrepareTransferArgs = {
-  pool: Contract;
-  amount: BigNumberish;
-  keyPairs: {
-    spender: KeyPair;
-    receiver: KeyPair;
-  };
-  relayer?: BigNumberish;
-  fee?: BigNumberish;
 };
