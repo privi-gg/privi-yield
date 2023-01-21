@@ -5,23 +5,19 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import './interfaces/IVerifier.sol';
-import './interfaces/IMixerPool.sol';
+import './interfaces/IPool.sol';
 import './interfaces/IAavePool.sol';
 import './interfaces/IAavePoolAddressProvider.sol';
 import './interfaces/IAToken.sol';
 import './MerkleTree.sol';
-import {DataTypes} from './libraries/DataTypes.sol';
+import {TxType, ProofArgs, ExtData, AaveReserveData} from './libraries/DataTypes.sol';
 import {WadRayMath} from './libraries/WadRayMath.sol';
 import {MathUtils} from './libraries/MathUtils.sol';
 import {Errors} from './libraries/Errors.sol';
 
-contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
+contract Pool is IPool, MerkleTree, ReentrancyGuard {
   using WadRayMath for uint256;
   using SafeERC20 for IERC20;
-
-  uint256 public constant MAX_EXT_AMOUNT = 2**248;
-  uint256 public constant MAX_FEE = 2**248;
-  uint256 public constant MIN_EXT_AMOUNT_LIMIT = 0.5 ether;
 
   IERC20 public immutable token;
   IAavePoolAddressProvider public immutable aavePoolAddressProvider;
@@ -30,7 +26,6 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
   IVerifier public immutable verifier16;
 
   uint256 public maxDepositAmount;
-  uint256 public scaledDust;
 
   mapping(bytes32 => bool) public nullifierHashes;
 
@@ -50,37 +45,27 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
     verifier16 = verifier16_;
   }
 
-  function deposit(
-    uint256 amount,
-    DataTypes.ProofArgs calldata args,
-    DataTypes.ExtData calldata extData
-  ) public {
-    if (amount > maxDepositAmount) revert Errors.DepositAmountTooHigh(amount, maxDepositAmount);
-
+  function supply(ProofArgs calldata args, ExtData calldata extData) external {
     (address aavePoolAddress, , uint256 nextLiquidityIndex) = getAavePoolAndReserveData();
 
-    uint256 calcScaledAmount = amount.rayDiv(nextLiquidityIndex);
     uint256 extScaledAmount = extData.scaledAmount;
-
-    if (extScaledAmount > calcScaledAmount) revert Errors.InvalidScaledAmount(extScaledAmount);
-
-    scaledDust += calcScaledAmount - extScaledAmount;
+    uint256 amount = extScaledAmount.rayMul(nextLiquidityIndex);
 
     token.safeTransferFrom(msg.sender, address(this), amount);
     token.approve(aavePoolAddress, amount);
     IAavePool(aavePoolAddress).supply(address(token), amount, address(this), 0);
 
-    _transact(args, extData, DataTypes.TxType.DEPOSIT);
+    _transact(args, extData, TxType.SUPPLY);
   }
 
-  function withdraw(DataTypes.ProofArgs calldata args, DataTypes.ExtData calldata extData) public {
+  function withdraw(ProofArgs calldata args, ExtData calldata extData) external {
     if (extData.recipient == address(0)) revert Errors.ZeroRecipientAddress();
 
-    _transact(args, extData, DataTypes.TxType.WITHDRAW);
+    _transact(args, extData, TxType.WITHDRAW);
 
     (
       address aavePoolAddress,
-      DataTypes.AaveReserveData memory aaveReserveData,
+      AaveReserveData memory aaveReserveData,
 
     ) = getAavePoolAndReserveData();
 
@@ -97,13 +82,13 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
     }
   }
 
-  function transfer(DataTypes.ProofArgs calldata args, DataTypes.ExtData calldata extData) public {
-    _transact(args, extData, DataTypes.TxType.TRANSFER);
+  function transfer(ProofArgs calldata args, ExtData calldata extData) external {
+    _transact(args, extData, TxType.TRANSFER);
 
     if (extData.scaledFee > 0) {
       (
         address aavePoolAddress,
-        DataTypes.AaveReserveData memory aaveReserveData,
+        AaveReserveData memory aaveReserveData,
 
       ) = getAavePoolAndReserveData();
 
@@ -122,14 +107,12 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
     view
     returns (
       address,
-      DataTypes.AaveReserveData memory,
+      AaveReserveData memory,
       uint256
     )
   {
     address aavePoolAddress = aavePoolAddressProvider.getPool();
-    DataTypes.AaveReserveData memory reserveData = IAavePool(aavePoolAddress).getReserveData(
-      address(token)
-    );
+    AaveReserveData memory reserveData = IAavePool(aavePoolAddress).getReserveData(address(token));
 
     uint256 cumulatedLiquidityInterest = MathUtils.calculateLinearInterest(
       reserveData.currentLiquidityRate,
@@ -161,9 +144,7 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
     returns (uint256, uint256)
   {
     address aavePoolAddress = aavePoolAddressProvider.getPool();
-    DataTypes.AaveReserveData memory reserveData = IAavePool(aavePoolAddress).getReserveData(
-      address(token)
-    );
+    AaveReserveData memory reserveData = IAavePool(aavePoolAddress).getReserveData(address(token));
     uint256 cumulatedLiquidityInterest = MathUtils.calculateLinearInterestAdjusted(
       reserveData.currentLiquidityRate,
       reserveData.lastUpdateTimestamp,
@@ -179,24 +160,21 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
   }
 
   function getPublicScaledAmount(
-    DataTypes.TxType txType,
+    TxType txType,
     uint256 extScaledAmount,
     uint256 scaledFee
   ) public pure returns (uint256) {
-    if (txType == DataTypes.TxType.DEPOSIT) {
+    if (txType == TxType.SUPPLY) {
       require(extScaledAmount >= scaledFee, 'Ext amount less than scaledFee');
     }
 
-    // require(scaledFee < MAX_FEE, 'Invalid scaledFee');
-    // require(extScaledAmount < MAX_EXT_AMOUNT, 'Invalid ext amount');
-
     uint256 publicScaledAmount;
 
-    if (txType == DataTypes.TxType.DEPOSIT) {
+    if (txType == TxType.SUPPLY) {
       publicScaledAmount = extScaledAmount;
-    } else if (txType == DataTypes.TxType.WITHDRAW) {
+    } else if (txType == TxType.WITHDRAW) {
       publicScaledAmount = FIELD_SIZE - (extScaledAmount + scaledFee);
-    } else if (txType == DataTypes.TxType.TRANSFER) {
+    } else if (txType == TxType.TRANSFER) {
       publicScaledAmount = scaledFee;
     } else {
       revert('Invalid TxType');
@@ -205,7 +183,7 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
     return publicScaledAmount;
   }
 
-  function verifyProof(DataTypes.ProofArgs calldata args) public view returns (bool) {
+  function verifyProof(ProofArgs calldata args) public view returns (bool) {
     if (args.inputNullifiers.length == 2) {
       return
         verifier2.verifyProof(
@@ -258,28 +236,38 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
   }
 
   function _transact(
-    DataTypes.ProofArgs calldata args,
-    DataTypes.ExtData calldata extData,
-    DataTypes.TxType txType
+    ProofArgs calldata args,
+    ExtData calldata extData,
+    TxType txType
   ) internal nonReentrant {
-    if (!isKnownRoot(args.root)) revert Errors.InvalidMerkleRoot();
+    if (!isKnownRoot(args.root)) {
+      revert Errors.InvalidMerkleRoot();
+    }
 
     for (uint256 i = 0; i < args.inputNullifiers.length; ++i) {
-      if (isSpent(args.inputNullifiers[i])) revert Errors.InputNullifierAlreadySpent();
+      if (isSpent(args.inputNullifiers[i])) {
+        revert Errors.InputNullifierAlreadySpent();
+      }
     }
 
     uint256 calcExtDataHash = uint256(keccak256(abi.encode(extData))) % FIELD_SIZE;
-    if (calcExtDataHash != uint256(args.extDataHash)) revert Errors.InvalidExtDataHash();
+    if (calcExtDataHash != uint256(args.extDataHash)) {
+      revert Errors.InvalidExtDataHash();
+    }
 
-    uint256 calcPublicScaledAmount = getPublicScaledAmount(
+    uint256 calculatedPublicScaledAmount = getPublicScaledAmount(
       txType,
       extData.scaledAmount,
       extData.scaledFee
     );
-    if (calcPublicScaledAmount != args.publicScaledAmount)
-      revert Errors.InvalidPublicScaledAmount();
 
-    if (!verifyProof(args)) revert Errors.InvalidTxProof();
+    if (calculatedPublicScaledAmount != args.publicScaledAmount) {
+      revert Errors.InvalidPublicScaledAmount();
+    }
+
+    if (!verifyProof(args)) {
+      revert Errors.InvalidTxProof();
+    }
 
     for (uint256 i = 0; i < args.inputNullifiers.length; ++i) {
       nullifierHashes[args.inputNullifiers[i]] = true;
@@ -287,10 +275,10 @@ contract MixerPool is IMixerPool, MerkleTree, ReentrancyGuard {
 
     _insert(args.outputCommitments[0], args.outputCommitments[1]);
 
-    emit NewCommitment(args.outputCommitments[0], nextLeafIndex - 2, extData.encryptedOutput1);
-    emit NewCommitment(args.outputCommitments[1], nextLeafIndex - 1, extData.encryptedOutput2);
+    emit CommitmentInserted(args.outputCommitments[0], nextLeafIndex - 2, extData.encryptedOutput1);
+    emit CommitmentInserted(args.outputCommitments[1], nextLeafIndex - 1, extData.encryptedOutput2);
     for (uint256 i = 0; i < args.inputNullifiers.length; i++) {
-      emit NewNullifier(args.inputNullifiers[i]);
+      emit NullifierUsed(args.inputNullifiers[i]);
     }
   }
 }
