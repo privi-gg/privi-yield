@@ -6,6 +6,16 @@ import { CircuitPath, SupplyProver } from '@privi-yield/common';
 //@ts-ignore
 import * as snarkJs from 'snarkjs';
 
+const tx2CircuitPath: CircuitPath = {
+  circuit: `./artifacts/circuits/transaction2_js/transaction2.wasm`,
+  zKey: `./artifacts/circuits/transaction2.zkey`,
+};
+
+const tx16CircuitPath: CircuitPath = {
+  circuit: `./artifacts/circuits/transaction16_js/transaction16.wasm`,
+  zKey: `./artifacts/circuits/transaction16.zkey`,
+};
+
 async function buildMerkleTree(pool: Contract) {
   const filter = pool.filters.NewCommitment();
   const events = await pool.queryFilter(filter, 0);
@@ -19,17 +29,7 @@ async function buildMerkleTree(pool: Contract) {
   });
 }
 
-const tx2CircuitPath: CircuitPath = {
-  circuit: `./artifacts/circuits/transaction2_js/transaction2.wasm`,
-  zKey: `./artifacts/circuits/transaction2.zkey`,
-};
-
-const tx16CircuitPath: CircuitPath = {
-  circuit: `./artifacts/circuits/transaction16_js/transaction16.wasm`,
-  zKey: `./artifacts/circuits/transaction16.zkey`,
-};
-
-export async function transactDeposit({ pool, amount, ...rest }: any) {
+export async function transactSupply({ pool, amount, ...rest }: any) {
   const merkleTree = await buildMerkleTree(pool);
   const prover = new SupplyProver({
     snarkJs,
@@ -39,11 +39,11 @@ export async function transactDeposit({ pool, amount, ...rest }: any) {
   });
 
   const { proofArgs, extData } = await prover.prepareTxProof({
-    txType: 'deposit',
+    txType: 'supply',
     ...rest,
   });
 
-  const tx = await pool.deposit(amount, proofArgs, extData);
+  const tx = await pool.supply(amount, proofArgs, extData);
   return tx.wait();
 }
 
