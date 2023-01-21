@@ -3,7 +3,7 @@ import MerkleTree, { PartialMerkleTree } from 'fixed-merkle-tree';
 import { KeyPair } from '../keyPair';
 import { Utxo } from '../utxo';
 
-export type TxType = 'deposit' | 'withdraw' | 'transfer';
+export type TxType = 'supply' | 'withdraw' | 'transfer';
 
 export type CircuitPath = { circuit: string; zKey: string };
 export type ProofGeneratorConstructorArgs = {

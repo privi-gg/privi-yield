@@ -36,7 +36,7 @@ export class SupplyProver {
     }
 
     let scaledAmount;
-    if (txType === 'deposit') {
+    if (txType === 'supply') {
       scaledAmount = BigNumber.from(scaledFee)
         .add(outputs.reduce((sum, x) => sum.add(x.scaledAmount), BigNumber.from(0)))
         .sub(inputs.reduce((sum, x) => sum.add(x.scaledAmount), BigNumber.from(0)));
@@ -100,7 +100,7 @@ export class SupplyProver {
     };
 
     let publicScaledAmount;
-    if (txType === 'deposit') {
+    if (txType === 'supply') {
       publicScaledAmount = BigNumber.from(scaledAmount);
     } else if (txType === 'withdraw') {
       publicScaledAmount = BigNumber.from(this.fieldSize).sub(
