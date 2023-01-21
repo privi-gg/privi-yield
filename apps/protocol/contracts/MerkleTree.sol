@@ -21,7 +21,7 @@ contract MerkleTree {
   mapping(uint256 => bytes32) public roots;
 
   uint32 public currentRootIndex;
-  uint32 public nextIndex;
+  uint32 public nextLeafIndex;
 
   constructor(uint256 numLevels_, address hasher_) {
     if (numLevels_ == 0 || numLevels_ >= 32) revert Errors.InvalidMerkleTreeDepth(numLevels_);
@@ -48,7 +48,7 @@ contract MerkleTree {
   }
 
   function _insert(bytes32 leaf1, bytes32 leaf2) internal returns (uint32 index) {
-    uint32 _nextIndex = nextIndex;
+    uint32 _nextIndex = nextLeafIndex;
 
     if (_nextIndex >= 2**numLevels) revert Errors.MerkleTreeFull();
 
@@ -75,7 +75,7 @@ contract MerkleTree {
     currentRootIndex = newRootIndex;
     roots[newRootIndex] = currentLevelHash;
 
-    nextIndex = _nextIndex + 2;
+    nextLeafIndex = _nextIndex + 2;
     return _nextIndex;
   }
 
