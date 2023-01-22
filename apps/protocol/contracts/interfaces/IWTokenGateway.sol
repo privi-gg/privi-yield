@@ -18,10 +18,4 @@ interface IWTokenGateway {
         ProofArgs calldata args,
         ExtData calldata extData
     ) external;
-
-    function transfer(
-        address pool,
-        ProofArgs calldata args,
-        ExtData calldata extData
-    ) external;
 }
