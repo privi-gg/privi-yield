@@ -5,9 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IWToken.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IWTokenGateway.sol";
+import {WadRayMath} from "./libraries/WadRayMath.sol";
 import {ProofArgs, ExtData, AaveReserveData} from "./libraries/DataTypes.sol";
 
 contract WTokenGateway is IWTokenGateway {
+    using WadRayMath for uint256;
     IWToken public immutable wToken;
 
     constructor(address wToken_) {
