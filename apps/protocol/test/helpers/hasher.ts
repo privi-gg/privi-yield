@@ -1,9 +1,10 @@
 import { ethers } from 'hardhat';
-const genContract = require('xcircomlib/src/poseidon_gencontract.js');
+import { Wallet } from 'ethers';
+import { poseidonArtifact } from 'privi-utils';
 
-export async function deployHasher(wallet?: any) {
-  const abi = genContract.generateABI(2) as any[];
-  const bytecode = genContract.createCode(2) as any;
+export async function deployHasher(wallet?: Wallet) {
+  const abi = poseidonArtifact.abi;
+  const bytecode = poseidonArtifact.bytecode;
   const Factory = await ethers.getContractFactory(abi, bytecode);
   let instance;
   if (wallet) {
