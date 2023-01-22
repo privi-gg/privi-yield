@@ -48,8 +48,7 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
     function supply(ProofArgs calldata args, ExtData calldata extData) external {
         (address aavePoolAddress, , uint256 nextLiquidityIndex) = getAavePoolAndReserveData();
 
-        uint256 extScaledAmount = extData.scaledAmount;
-        uint256 amount = extScaledAmount.rayMul(nextLiquidityIndex);
+        uint256 amount = extData.scaledAmount.rayMul(nextLiquidityIndex);
 
         token.safeTransferFrom(msg.sender, address(this), amount);
         token.approve(aavePoolAddress, amount);
