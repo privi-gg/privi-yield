@@ -45,19 +45,27 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
         verifier16 = verifier16_;
     }
 
-    function supply(ProofArgs calldata args, ExtData calldata extData) external {
+    function supply(ProofArgs calldata args, ExtData calldata extData)
+        external
+        returns (uint256 supplyAmount)
+    {
         (address aavePoolAddress, , uint256 nextLiquidityIndex) = getAavePoolAndReserveData();
 
-        uint256 amount = extData.scaledAmount.rayMul(nextLiquidityIndex);
+        uint256 supplyAmount = extData.scaledAmount.rayMul(nextLiquidityIndex);
 
-        token.safeTransferFrom(msg.sender, address(this), amount);
-        token.approve(aavePoolAddress, amount);
-        IAavePool(aavePoolAddress).supply(address(token), amount, address(this), 0);
+        token.safeTransferFrom(msg.sender, address(this), supplyAmount);
+        token.approve(aavePoolAddress, supplyAmount);
+        IAavePool(aavePoolAddress).supply(address(token), supplyAmount, address(this), 0);
 
         _transact(args, extData, TxType.SUPPLY);
+
+        return supplyAmount;
     }
 
-    function withdraw(ProofArgs calldata args, ExtData calldata extData) external {
+    function withdraw(ProofArgs calldata args, ExtData calldata extData)
+        external
+        returns (uint256 withdrawAmount)
+    {
         if (extData.recipient == address(0)) revert Errors.ZeroRecipientAddress();
 
         _transact(args, extData, TxType.WITHDRAW);
@@ -72,6 +80,7 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
 
         uint256 withdrawAmount = extData.scaledAmount.rayMul(normalizedIncome);
         uint256 fee = extData.scaledFee.rayMul(normalizedIncome);
+
         IAToken(aaveReserveData.aTokenAddress).approve(aavePoolAddress, withdrawAmount);
         IAavePool(aavePoolAddress).withdraw(address(token), withdrawAmount + fee, address(this));
 
