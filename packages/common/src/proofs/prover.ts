@@ -77,7 +77,7 @@ export class SupplyProver {
     const inputPathIndices = [];
     const inputPathElements = [];
     for (const input of inputs) {
-      if (input.scaledAmount > 0) {
+      if (input.scaledAmount.gt(0)) {
         input.leafIndex = tree.indexOf(toFixedHex(input.commitment));
         if (input.leafIndex && input.leafIndex < 0) {
           throw new Error(`Input commitment ${toFixedHex(input.commitment)} was not found`);
@@ -104,7 +104,7 @@ export class SupplyProver {
       publicScaledAmount = BigNumber.from(scaledAmount);
     } else if (txType === 'withdraw') {
       publicScaledAmount = BigNumber.from(this.fieldSize).sub(
-        BigNumber.from(scaledAmount).add(scaledFee),
+        BigNumber.from(scaledAmount).add(scaledFee)
       );
     } else if (txType === 'transfer') {
       publicScaledAmount = BigNumber.from(scaledFee);

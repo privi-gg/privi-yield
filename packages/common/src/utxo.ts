@@ -3,8 +3,8 @@ import { KeyPair } from './keyPair';
 import { poseidonHash, randomBN, toFixedBuffer } from './helpers';
 
 export class Utxo {
-  scaledAmount: BigNumberish;
-  blinding: BigNumberish;
+  scaledAmount: BigNumber;
+  blinding: BigNumber;
   keyPair: KeyPair;
   leafIndex?: number;
   private _commitment?: string;
@@ -42,10 +42,7 @@ export class Utxo {
    */
   get nullifier() {
     if (!this._nullifier) {
-      if (
-        this.scaledAmount > 0 &&
-        (!isFinite(this.leafIndex as number) || !this.keyPair.privateKey)
-      ) {
+      if (!isFinite(this.leafIndex as number) || !this.keyPair.privateKey) {
         throw new Error('Can not compute nullifier without utxo index or private key');
       }
       const signature = this.keyPair.privateKey
