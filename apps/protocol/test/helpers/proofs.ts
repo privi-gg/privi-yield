@@ -1,7 +1,7 @@
 import { Contract } from 'ethers';
 import MerkleTree from 'fixed-merkle-tree';
+import { poseidonHash, toFixedHex } from 'privi-utils';
 import { FIELD_SIZE, TREE_HEIGHT, ZERO_VALUE } from './constants';
-import { poseidonHash, toFixedHex } from './utils';
 import { CircuitPath, SupplyProver } from '@privi-yield/common';
 //@ts-ignore
 import * as snarkJs from 'snarkjs';

@@ -1,8 +1,8 @@
 import { ethers } from 'hardhat';
-import MerkleTree from 'fixed-merkle-tree';
-import { TREE_HEIGHT, ZERO_VALUE } from '../constants';
-import { poseidonHash } from './snark';
 import { type BigNumberish } from 'ethers';
+import MerkleTree from 'fixed-merkle-tree';
+import { poseidonHash } from 'privi-utils';
+import { TREE_HEIGHT, ZERO_VALUE } from '../constants';
 
 const { BigNumber, utils } = ethers;
 

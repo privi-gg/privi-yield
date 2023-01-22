@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@privi-yield/common": "*",
+    "privi-utils": "https://github.com/privi-gg/privi-utils.git#main",
     "@ethersproject/abi": "^5.4.7",
     "@ethersproject/providers": "^5.4.7",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
