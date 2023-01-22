@@ -6,5 +6,5 @@ interface IMerkleTree {
 
   function isKnownRoot(bytes32 root) external view returns (bool);
 
-  function getLastRoot() public view returns (bytes32);
+  function getLastRoot() external view returns (bytes32);
 }
