@@ -1,12 +1,12 @@
 import { expect } from 'chai';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { deployHasher } from '../scripts/hasher';
-import { deployContract, getNewTree, poseidonHash, toFixedHex } from './helpers/utils';
+import { ZERO_LEAF } from '@privi-yield/common';
+import { deployContract, getNewTree } from './helpers/utils';
 import { TREE_HEIGHT } from './helpers/constants';
+import { deployHasher } from './helpers/hasher';
+import { poseidonHash, toFixedHex } from 'privi-utils';
 
-describe('MerkleTree', function () {
-  this.timeout(20000);
-
+describe.only('MerkleTree', function () {
   async function fixture() {
     const hasher = await deployHasher();
     const merkleTree = await deployContract('MerkleTreeMock', TREE_HEIGHT, hasher.address);
@@ -14,14 +14,17 @@ describe('MerkleTree', function () {
     return { hasher, merkleTree };
   }
 
-  describe('#constructor', () => {
+  describe('Initialization', () => {
     it('should initialize', async () => {
       const { merkleTree } = await loadFixture(fixture);
-      const zeroValue = await merkleTree.ZERO_VALUE();
+      const zeroLeaf = await merkleTree.ZERO_LEAF();
+
       const firstSubtree = await merkleTree.filledSubtrees(0);
-      const firstZero = await merkleTree.zeros(0);
-      expect(firstSubtree).to.be.equal(zeroValue);
-      expect(firstZero).to.be.equal(zeroValue);
+      const firstZero = await merkleTree.zeroes(0);
+
+      expect(zeroLeaf).to.be.equal(ZERO_LEAF);
+      expect(firstSubtree).to.be.equal(zeroLeaf);
+      expect(firstZero).to.be.equal(zeroLeaf);
     });
 
     it('should correctly hash 2 leaves', async () => {
@@ -40,7 +43,7 @@ describe('MerkleTree', function () {
     });
   });
 
-  describe('#insert', () => {
+  describe('Insertion', () => {
     it('should insert', async () => {
       const { merkleTree } = await loadFixture(fixture);
       const tree = getNewTree();
@@ -54,7 +57,7 @@ describe('MerkleTree', function () {
     });
   });
 
-  describe('#isKnownRoot', () => {
+  describe('Merkle Root', () => {
     async function fixtureFilled() {
       const { merkleTree, hasher } = await loadFixture(fixture);
       await merkleTree.insert(toFixedHex(123), toFixedHex(456));
