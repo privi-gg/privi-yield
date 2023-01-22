@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import {ProofArgs, ExtData} from "../libraries/DataTypes.sol";
+import {ProofArgs, ExtData, AaveReserveData} from "../libraries/DataTypes.sol";
 
 interface IPool {
     event CommitmentInserted(bytes32 commitment, uint256 leafIndex, bytes encryptedOutput);
@@ -14,4 +14,13 @@ interface IPool {
     function transfer(ProofArgs calldata args, ExtData calldata extData) external;
 
     function verifyProof(ProofArgs calldata args) external view returns (bool);
+
+    function getAavePoolAndReserveData() 
+        external
+        view
+        returns (
+            address,
+            AaveReserveData memory,
+            uint256
+        )
 }
