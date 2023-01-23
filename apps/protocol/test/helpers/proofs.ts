@@ -17,7 +17,7 @@ const tx16CircuitPath: CircuitPath = {
 };
 
 async function buildMerkleTree(pool: Contract) {
-  const filter = pool.filters.NewCommitment();
+  const filter = pool.filters.CommitmentInserted();
   const events = await pool.queryFilter(filter, 0);
 
   const leaves = events
@@ -43,7 +43,7 @@ export async function transactSupply({ pool, amount, ...rest }: any) {
     ...rest,
   });
 
-  const tx = await pool.supply(amount, proofArgs, extData);
+  const tx = await pool.supply(proofArgs, extData);
   return tx.wait();
 }
 
