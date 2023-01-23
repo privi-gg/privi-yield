@@ -45,10 +45,7 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
         verifier16 = verifier16_;
     }
 
-    function supply(ProofArgs calldata args, ExtData calldata extData)
-        external
-        returns (uint256 supplyAmount)
-    {
+    function supply(ProofArgs calldata args, ExtData calldata extData) external returns (uint256) {
         (address aavePoolAddress, , uint256 nextLiquidityIndex) = getAavePoolAndReserveData();
 
         uint256 supplyAmount = extData.scaledAmount.rayMul(nextLiquidityIndex);
@@ -64,7 +61,7 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
 
     function withdraw(ProofArgs calldata args, ExtData calldata extData)
         external
-        returns (uint256 withdrawAmount)
+        returns (uint256)
     {
         if (extData.recipient == address(0)) revert Errors.ZeroRecipientAddress();
 
@@ -88,6 +85,8 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
         if (fee > 0) {
             token.safeTransfer(extData.relayer, fee);
         }
+
+        return withdrawAmount;
     }
 
     function transfer(ProofArgs calldata args, ExtData calldata extData) external {
