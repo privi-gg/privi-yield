@@ -6,7 +6,7 @@ import { TREE_HEIGHT } from './helpers/constants';
 import { deployHasher } from './helpers/hasher';
 import { poseidonHash, toFixedHex } from 'privi-utils';
 
-describe.only('MerkleTree', function () {
+describe('MerkleTree', function () {
   async function fixture() {
     const hasher = await deployHasher();
     const merkleTree = await deployContract('MerkleTreeMock', TREE_HEIGHT, hasher.address);
