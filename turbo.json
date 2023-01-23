@@ -6,7 +6,13 @@
       "outputs": ["dist/**", ".next/**"]
     },
     "protocol#build": {
-      "env": ["RPC_POLYGON_MUMBAI", "RPC_POLYGON_MAINNET", "PRIVATE_KEYS_TEST", "HARDHAT_FORK"]
+      "env": [
+        "RPC_POLYGON_MUMBAI",
+        "RPC_POLYGON_MAINNET",
+        "RPC_GOERLI",
+        "PRIVATE_KEYS_TEST",
+        "HARDHAT_FORK"
+      ]
     },
     "web#build": {
       "env": [
