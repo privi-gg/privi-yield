@@ -1,7 +1,7 @@
 import { ethers } from 'hardhat';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { networks } from './config';
+import { networks } from '../../config';
 
 const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, getChainId } = hre;
@@ -12,11 +12,13 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const numLevels = 20;
   const maxDepositAmount = ethers.utils.parseEther('1');
   const chainId = await getChainId();
-  const tokenAddress = networks[chainId].assets.wmatic;
+
+  const token = Object.keys(networks[chainId].assets)[0];
+  const tokenAddress = networks[chainId].assets[token];
   const aavePoolAddressProvider = networks[chainId].aavePoolAddressProvider;
 
   await deployments.deploy('pool', {
-    contract: 'MixerPool',
+    contract: 'Pool',
     from: deployer,
     args: [
       numLevels,
