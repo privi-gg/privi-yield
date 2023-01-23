@@ -29,7 +29,7 @@ async function buildMerkleTree(pool: Contract) {
   });
 }
 
-export async function transactSupply({ pool, amount, ...rest }: any) {
+export const prepareSupplyProof = async ({ pool, ...rest }: any) => {
   const merkleTree = await buildMerkleTree(pool);
   const prover = new SupplyProver({
     snarkJs,
@@ -43,11 +43,10 @@ export async function transactSupply({ pool, amount, ...rest }: any) {
     ...rest,
   });
 
-  const tx = await pool.supply(proofArgs, extData);
-  return tx.wait();
-}
+  return { proofArgs, extData };
+};
 
-export async function transactWithdraw({ pool, ...rest }: any) {
+export const prepareWithdrawProof = async ({ pool, amount, ...rest }: any) => {
   const merkleTree = await buildMerkleTree(pool);
   const prover = new SupplyProver({
     snarkJs,
@@ -58,9 +57,21 @@ export async function transactWithdraw({ pool, ...rest }: any) {
 
   const { proofArgs, extData } = await prover.prepareTxProof({
     txType: 'withdraw',
+    amount,
     ...rest,
   });
 
+  return { proofArgs, extData };
+};
+
+export async function transactSupply({ pool, ...rest }: any) {
+  const { proofArgs, extData } = await prepareSupplyProof({ pool, ...rest });
+  const tx = await pool.supply(proofArgs, extData);
+  return tx.wait();
+}
+
+export async function transactWithdraw({ pool, ...rest }: any) {
+  const { proofArgs, extData } = await prepareWithdrawProof({ pool, ...rest });
   const tx = await pool.withdraw(proofArgs, extData);
   return tx.wait();
 }
