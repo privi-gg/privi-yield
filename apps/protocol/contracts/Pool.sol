@@ -147,6 +147,21 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
         return nextLiquidityIndex;
     }
 
+    function getAaveScaledAmount(uint256 amount) public view returns (uint256) {
+        address aavePoolAddress = aavePoolAddressProvider.getPool();
+        AaveReserveData memory reserveData = IAavePool(aavePoolAddress).getReserveData(
+            address(token)
+        );
+        uint256 cumulatedLiquidityInterest = MathUtils.calculateLinearInterest(
+            reserveData.currentLiquidityRate,
+            reserveData.lastUpdateTimestamp
+        );
+        uint256 nextLiquidityIndex = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
+        uint256 scaledAmount = amount.rayDiv(nextLiquidityIndex);
+
+        return scaledAmount;
+    }
+
     function getAaveScaledAmountAdjusted(uint256 amount, uint256 deltaSec)
         public
         view
