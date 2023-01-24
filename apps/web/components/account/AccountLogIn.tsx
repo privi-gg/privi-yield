@@ -13,7 +13,6 @@ import {
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { FormInput } from 'components/common/form';
 import { useShieldedAccount } from 'contexts/shieldedAccount';
 import logger from 'utils/logger';
 import { isDev } from 'config/env';
@@ -22,7 +21,8 @@ import { APP_NAME, SIGN_MESSAGE } from 'config/constants';
 import { useSignMessage } from 'wagmi';
 import { ArrowRightIcon, KeyIcon } from 'components/icons';
 import { useState } from 'react';
-// import { generateKeyPairFromSignature } from 'utils/stream';
+import { FormTextInput } from 'components/form';
+import { generateKeyPairFromSignature } from 'utils/pool';
 
 const schema = yup.object().shape({
   privateKey: yup
@@ -54,8 +54,8 @@ const AccountLogIn: React.FC<StackProps> = ({ ...props }) => {
 
   const handleWalletLogin = async () => {
     const signature = await signMessageAsync();
-    // const keyPair = generateKeyPairFromSignature(signature);
-    // logIn(keyPair.privateKey);
+    const keyPair = generateKeyPairFromSignature(signature);
+    logIn(keyPair.privateKey);
     closeModal();
   };
 
@@ -93,7 +93,7 @@ const AccountLogIn: React.FC<StackProps> = ({ ...props }) => {
       <Box py={4} px={8}>
         {showLogInForm ? (
           <VStack as="form" onSubmit={handleSubmit(submit)} alignItems="stretch" spacing={4}>
-            <FormInput label="Enter Shielded Private Key" name="privateKey" control={control} />
+            <FormTextInput label="Enter Shielded Private Key" name="privateKey" control={control} />
             <Button type="submit">Log In</Button>
             <Button onClick={() => setShowLogInForm(false)} variant="ghost" colorScheme="gray">
               Back
