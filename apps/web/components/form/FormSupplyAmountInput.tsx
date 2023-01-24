@@ -9,11 +9,8 @@ import {
   FormErrorMessage,
   HStack,
   Avatar,
-  InputGroup,
-  InputRightElement,
   Card,
   Text,
-  Box,
   Button,
   VStack,
 } from '@chakra-ui/react';
@@ -25,7 +22,8 @@ import { useAccount } from 'wagmi';
 import { constants } from 'ethers';
 import { formatUnits, parseUnits } from 'privi-utils';
 
-interface FormInputProps extends FormControlProps {
+interface FormSupplyAmountInputProps extends FormControlProps {
+  token: string;
   name: string;
   label?: string;
   defaultValue?: string | number;
@@ -43,7 +41,8 @@ const parseErrorKeys = (name: string): Array<string> => {
   return name.split('.');
 };
 
-const FormAmountInput: FC<FormInputProps> = ({
+const FormSupplyAmountInput: FC<FormSupplyAmountInputProps> = ({
+  token,
   name,
   label,
   control,
@@ -128,7 +127,7 @@ const FormAmountInput: FC<FormInputProps> = ({
         </HStack>
 
         <HStack justify="space-between" alignItems="center">
-          <TokenPriceText color="gray.500" fontSize="sm" amount={amountWei} />
+          <TokenPriceText color="gray.500" fontSize="sm" amount={amountWei} token={token} />
           <Button variant="ghost" size="sm" onClick={setMaxAmount}>
             MAX
           </Button>
@@ -139,4 +138,4 @@ const FormAmountInput: FC<FormInputProps> = ({
   );
 };
 
-export default FormAmountInput;
+export default FormSupplyAmountInput;
