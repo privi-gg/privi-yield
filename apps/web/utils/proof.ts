@@ -60,7 +60,7 @@ export const prepareSupplyProof = async ({
   const inputsSum = inputNotes.reduce((acc, note) => acc.add(note.scaledAmount), BN(0));
   logger.info(`Current UTXOs: Count ${inputNotes.length} Sum: ${formatEther(inputsSum)}`);
 
-  const outputsSum = BN(inputsSum).add(scaledAmount);
+  const outputsSum = inputsSum.add(scaledAmount);
   const outputNotes = [new Utxo({ scaledAmount: outputsSum, keyPair: to })];
   logger.info(`New UTXOs: Amount sum: ${formatEther(outputsSum)}`);
 
@@ -103,7 +103,7 @@ export const prepareWithdrawProof = async ({
   const inputsSum = inputNotes.reduce((acc, note) => acc.add(note.scaledAmount), BN(0));
   logger.info(`Current UTXOs: Count ${inputNotes.length} Sum: ${formatEther(inputsSum)}`);
 
-  const outputsSum = BN(inputsSum).sub(scaledAmount);
+  const outputsSum = inputsSum.sub(scaledAmount);
   if (outputsSum.isNegative()) {
     throw new Error('Not enough balance');
   }
