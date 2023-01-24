@@ -4,7 +4,6 @@ import { AccountRegisterButton } from 'components/account';
 import { APP_NAME, ROUTES } from 'config/constants';
 import { useShieldedAccount } from 'contexts/shieldedAccount';
 import { useUI } from 'contexts/ui';
-import Link from '../Link';
 import Logo from '../Logo';
 import { ConnectWalletButton, WalletAddressButton } from 'components/wallet';
 import { useAccount } from 'wagmi';
@@ -31,26 +30,6 @@ const Header: React.FC<FlexProps> = ({ ...props }) => {
           <Text color="primary.500" fontSize="2xl" fontWeight="bold">
             {APP_NAME}
           </Text>
-        </HStack>
-        <HStack spacing={8}>
-          <Link
-            href={ROUTES.DEPOSIT}
-            fontWeight={router.pathname === ROUTES.DEPOSIT ? 'bold' : 'normal'}
-          >
-            Deposit
-          </Link>
-          <Link
-            href={ROUTES.WITHDRAW}
-            fontWeight={router.pathname === ROUTES.WITHDRAW ? 'bold' : 'normal'}
-          >
-            Withdraw
-          </Link>
-          <Link
-            href={ROUTES.TRANSFER}
-            fontWeight={router.pathname === ROUTES.TRANSFER ? 'bold' : 'normal'}
-          >
-            Transfer
-          </Link>
         </HStack>
       </HStack>
 

@@ -1,6 +1,7 @@
 import { FC, PropsWithChildren } from 'react';
 import { getDefaultWallets, lightTheme, RainbowKitProvider } from '@rainbow-me/rainbowkit';
-import { chain, configureChains, createClient, WagmiConfig } from 'wagmi';
+import { configureChains, createClient, WagmiConfig } from 'wagmi';
+import { goerli, polygonMumbai } from 'wagmi/chains';
 import { alchemyProvider } from 'wagmi/providers/alchemy';
 import { keyAlchemyGoerli, keyAlchemyMumbai } from 'config/env';
 import { APP_NAME } from 'config/constants';
@@ -8,7 +9,7 @@ import fonts from 'theme/fonts';
 import { defaultChainId } from 'config/network';
 
 const { chains, provider } = configureChains(
-  [chain.goerli, chain.polygonMumbai],
+  [goerli, polygonMumbai],
   [alchemyProvider({ apiKey: keyAlchemyGoerli }), alchemyProvider({ apiKey: keyAlchemyMumbai })],
 );
 

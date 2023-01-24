@@ -1,7 +1,8 @@
-import { Modal, ModalOverlay, ModalContent, ModalBody, ModalCloseButton } from '@chakra-ui/react';
+import { Modal, ModalOverlay, ModalContent, ModalBody } from '@chakra-ui/react';
 import { AccountLogIn, AccountRegister } from 'components/account';
+import { SupplyAsset, WithdrawAsset } from 'components/assets';
 
-import { useUI } from 'contexts/ui';
+import { modalViews, useUI } from 'contexts/ui';
 
 const ManagedModal: React.FC = () => {
   const { isModalOpen, closeModal, modalView } = useUI();
@@ -11,8 +12,10 @@ const ManagedModal: React.FC = () => {
       <ModalOverlay />
       <ModalContent>
         <ModalBody p={0}>
-          {modalView === 'ACCOUNT_REGISTER' && <AccountRegister />}
-          {modalView === 'ACCOUNT_LOGIN' && <AccountLogIn />}
+          {modalView === modalViews.ACCOUNT_REGISTER && <AccountRegister />}
+          {modalView === modalViews.ACCOUNT_LOGIN && <AccountLogIn />}
+          {modalView === modalViews.SUPPLY_ASSET && <SupplyAsset />}
+          {modalView === modalViews.WITHDRAW_ASSET && <WithdrawAsset />}
           {/* {modalView === 'VIEW_2' && <VIEW2 />} */}
         </ModalBody>
       </ModalContent>

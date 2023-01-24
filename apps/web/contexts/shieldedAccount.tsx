@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { useAccount } from 'wagmi';
 // import { useGetShieldedAccount } from 'api/account';
-import { KeyPair } from '@praave/utils';
+import { KeyPair } from '@privi-yield/common';
 
 interface State {
   isLoggedIn: boolean;

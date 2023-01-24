@@ -53,7 +53,7 @@ const FormTextInput: FC<FormInputProps> = ({
       isInvalid={!!error}
       rounded="md"
       borderWidth={1}
-      borderColor="white"
+      borderColor="gray.100"
       bgColor="gray.50"
       {...props}
     >

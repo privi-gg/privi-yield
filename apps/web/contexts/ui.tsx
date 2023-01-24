@@ -13,7 +13,14 @@ interface State {
   modalData: any;
 }
 
-type ModalView = 'ACCOUNT_REGISTER' | 'VIEW_2';
+export const modalViews = {
+  ACCOUNT_REGISTER: 'ACCOUNT_REGISTER',
+  ACCOUNT_LOGIN: 'ACCOUNT_LOGIN',
+  SUPPLY_ASSET: 'SUPPLY_ASSET',
+  WITHDRAW_ASSET: 'WITHDRAW_ASSET',
+};
+
+type ModalView = keyof typeof modalViews;
 
 type Action =
   | {
@@ -79,7 +86,7 @@ export const UIProvider: FC<PropsWithChildren> = (props) => {
       setModalViewAndOpen,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state],
+    [state]
   );
 
   return <UIContext.Provider value={value} {...props} />;

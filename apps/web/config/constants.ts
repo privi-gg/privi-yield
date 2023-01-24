@@ -10,3 +10,5 @@ export const ROUTES = {
   WITHDRAW: '/withdraw',
   TRANSFER: '/transfer',
 };
+
+export const RELAYER_URL = 'https://relayer.privi.org';

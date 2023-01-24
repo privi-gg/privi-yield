@@ -1,16 +1,16 @@
 import { FC } from 'react';
 import { TextProps, Text } from '@chakra-ui/react';
-import { useGetTokenPrice } from 'api/getTokenPrice';
+import { useGetTokenPrice } from 'api/asset/getTokenPrice';
 import useInstance from 'hooks/instance';
 import { BigNumberish } from 'ethers';
-import { formatUnits } from 'utils/eth';
+import { formatUnits } from 'privi-utils';
 
 interface ITokenPriceTextProps extends TextProps {
   amount: BigNumberish;
+  token: string;
 }
 
-const TokenPriceText: FC<ITokenPriceTextProps> = ({ amount, ...props }) => {
-  const { token } = useInstance();
+const TokenPriceText: FC<ITokenPriceTextProps> = ({ amount, token, ...props }) => {
   const { data: price } = useGetTokenPrice({ token });
 
   const amountEth = formatUnits(amount, 18);

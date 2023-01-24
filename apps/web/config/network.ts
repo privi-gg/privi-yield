@@ -1,3 +1,4 @@
+import { ZERO_LEAF } from '@privi-yield/common';
 import { rpcGoerli, rpcPolygonMumbai } from './env';
 
 export type Instance = {
@@ -23,22 +24,21 @@ export const chains = {
   POLYGON_MUMBAI: 80001,
 };
 
-export const defaultChainId = chains.POLYGON_MUMBAI;
+export const defaultChainId = chains.GOERLI;
 
 export const instanceConfig: Record<number, InstanceConfig> = {
   // Goerli instances
   [chains.GOERLI]: {
     rpcUrl: rpcGoerli,
-    wTokenGateway: '0x8e9b9c5f9f5b1b9e5e1c1e5b1b9e5e1c1e5b1b9e',
+    wTokenGateway: '0xDbe6d4B26B6112a99831D4a785c6D4bDF314c6D7',
     instances: {
       weth: {
         currency: 'ETH',
         decimals: 18,
-        instanceAddress: '0xA4908FcD064A4B9Bda5a3AFC096515F2E739D501',
+        instanceAddress: '0xA1A0b2c84B978144517F7e168Fea919be8265507',
         deployedBlock: 7831327,
         treeHeight: 20,
-        zeroElement:
-          '21663839004416932945382355908790599225266501822907911457504978515578255421292',
+        zeroElement: ZERO_LEAF,
         iconUrl: '/images/eth.png',
       },
     },
@@ -69,6 +69,6 @@ export const blockExplorers = {
 };
 
 // export const registrarAddress = '0x20703B9e08b840A2Cb6AB3f7E8B8926C9ed3aF24';
-export const registrarAddress = '0xFA9dCCDBeD0b934Ab0A2c0385E40A69F8d528BE7';
+export const registrarAddress = '0xA76ac9a80f64b7F90D96F08A06DcCE1dF86797A8';
 // export const tsunamiAddress = '0xc4c55B2c2Bb6fD0229A7aA508e33bc4Ca54D0aa0'; // wETH withdraws
 // export const tsunamiAddress = '0x56aDcC1BaF658C19FA4B149270e351db01957ca4'; // ETH withdraws
