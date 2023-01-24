@@ -4,12 +4,13 @@ import { useAccount } from 'wagmi';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { FormAmountInput, FormTextInput } from 'components/form';
+import { FormSupplyAmountInput, FormTextInput } from 'components/form';
 import logger from 'utils/logger';
 import { usePoolSupply } from 'api/pool';
 import { parseEther } from 'privi-utils';
 import { isDev } from 'config/env';
 import { useUI } from 'contexts/ui';
+import useToast from 'hooks/toast';
 
 const schema = yup.object().shape({
   amount: yup.number().typeError('Invalid number').positive('Invalid number').required('Required'),
@@ -27,6 +28,7 @@ interface ISupplyInput {
 const SupplyAsset: FC<StackProps> = ({ ...props }) => {
   const [isLoading, setLoading] = useState<boolean>(false);
   const { closeModal } = useUI();
+  const { showErrorToast } = useToast();
   const { address } = useAccount();
   const { supplyAsync, testAsync } = usePoolSupply();
   const { control, handleSubmit, setValue, getValues } = useForm<ISupplyInput>({
@@ -51,7 +53,7 @@ const SupplyAsset: FC<StackProps> = ({ ...props }) => {
       })
       .catch((err) => {
         logger.error(err);
-        alert(err.message);
+        showErrorToast({ description: err.message });
       })
       .finally(() => {
         setLoading(false);
@@ -84,7 +86,7 @@ const SupplyAsset: FC<StackProps> = ({ ...props }) => {
 
       <Box px={8} py={4}>
         <VStack as="form" alignItems="stretch" spacing={4} onSubmit={handleSubmit(submit)}>
-          <FormAmountInput name="amount" label="Enter Amount" control={control} />
+          <FormSupplyAmountInput name="amount" label="Enter Amount" control={control} token="eth" />
           <FormTextInput label="Recipient Address" name="recipient" control={control} />
           <Button type="submit" isLoading={isLoading}>
             Supply
