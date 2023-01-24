@@ -7325,8 +7325,8 @@ prettier@^2.3.1, prettier@^2.7.1, prettier@latest:
   integrity sha512-ujppO+MkdPqoVINuDFDRLClm7D78qbDt0/NR+wp5FqEZOoTNAjPHWj17QRhu7geIHJfcNhRk1XVQmF8Bp3ye+g==
 
 "privi-utils@https://github.com/privi-gg/privi-utils.git#main":
-  version "1.0.0"
-  resolved "https://github.com/privi-gg/privi-utils.git#93bbbffa5a75a4461214b0522aef0f92cf4cbd00"
+  version "0.1.1"
+  resolved "https://github.com/privi-gg/privi-utils.git#77e45aee0d65703b735f798d2ee0210085470f36"
   dependencies:
     xcircomlib "npm:circomlib@^0.5.5"
 
