@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "circuit:build": "./scripts/buildCircuit.sh 2 && ./scripts/buildCircuit.sh 16",
-    "build": "hardhat compile",
+    "compile": "hardhat compile",
     "test": "cross-env HARDHAT_FORK=true hardhat test",
     "deploy:test": "cross-env HARDHAT_FORK=true hardhat deploy --network hardhat",
     "deploy:goerli": "hardhat deploy --network goerli",
