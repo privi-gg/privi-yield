@@ -41,15 +41,19 @@ export class Utxo {
    * Returns nullifier for this UTXO
    */
   get nullifier() {
-    if (!this._nullifier) {
-      if (!isFinite(this.leafIndex as number) || !this.keyPair.privateKey) {
-        throw new Error('Can not compute nullifier without utxo index or private key');
-      }
-      const signature = this.keyPair.privateKey
-        ? this.keyPair.sign(this.commitment, this.leafIndex || 0)
-        : 0;
-      this._nullifier = poseidonHash(this.commitment, this.leafIndex || 0, signature);
+    if (this._nullifier) return this._nullifier;
+
+    if (
+      this.scaledAmount.gt(0) &&
+      (!isFinite(this.leafIndex as number) || !this.keyPair.privateKey)
+    ) {
+      throw new Error('Can not compute nullifier without utxo index or private key');
     }
+    const signature = this.keyPair.privateKey
+      ? this.keyPair.sign(this.commitment, this.leafIndex || 0)
+      : 0;
+    this._nullifier = poseidonHash(this.commitment, this.leafIndex || 0, signature);
+
     return this._nullifier;
   }
 
