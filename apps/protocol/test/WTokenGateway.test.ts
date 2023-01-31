@@ -84,6 +84,7 @@ describe('WTokenGateway', function () {
 
     const { proofArgs, extData } = await prepareSupplyProof({
       pool,
+      inputs: [Utxo.zero(), Utxo.zero()],
       outputs: [supplyUtxo],
     });
 
@@ -94,7 +95,7 @@ describe('WTokenGateway', function () {
     const poolBalance = await aWeth.balanceOf(pool.address);
     expect(poolBalance).to.be.closeTo(supplyAmount, deltaAmount);
 
-    await time.increase(2 * ONE_DAY);
+    await time.increase(100 * ONE_DAY);
 
     const recipient = randomHex(20);
     const withdrawScaledAmount = supplyScaledAmount;
