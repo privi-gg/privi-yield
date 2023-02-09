@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
-import { erc20ABI, useContractWrite, useProvider, useWaitForTransaction } from 'wagmi';
+import { useContractWrite, useProvider, useWaitForTransaction } from 'wagmi';
 import { BN, parseEther } from 'privi-utils';
-import pool from 'abi/pool.json';
+// import pool from 'abi/pool.json';
+import wTokenGateway from 'abi/wTokenGateway.json';
 import logger from 'utils/logger';
-import { usePoolContract, useRegistrarContract } from 'hooks/contracts';
-import { BigNumber, Contract, Wallet } from 'ethers';
+import { usePoolContract, useRegistrarContract, useWTokenGatewayContract } from 'hooks/contracts';
+import { BigNumber, Wallet } from 'ethers';
 import { prepareSupplyProof } from 'utils/proof';
 import { fetchUserShieldedAccount } from 'utils/pool';
 import { useShieldedAccount } from 'contexts/shieldedAccount';
@@ -12,8 +13,9 @@ import { testPrivateKey } from 'config/env';
 
 const supplyDelta = parseEther('0.001');
 
-export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
+export const usePoolSupplyNative = ({ poolAddress }: { poolAddress: string }) => {
   const poolContract = usePoolContract({ poolAddress });
+  const wTokenGatewayContract = useWTokenGatewayContract();
   const registrarContract = useRegistrarContract();
   const { keyPair } = useShieldedAccount();
   const provider = useProvider();
@@ -23,8 +25,8 @@ export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
     // address: instance.instanceAddress,
     // abi: pool.abi,
     //@todo Generalize for non-native tokens
-    address: poolContract.address,
-    abi: pool.abi,
+    address: wTokenGatewayContract.address,
+    abi: wTokenGateway.abi,
     functionName: 'supply',
     overrides: {
       gasLimit: BN(2_000_000),
@@ -39,7 +41,6 @@ export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
     }
 
     const scaledAmount = amount.sub(supplyDelta);
-    // const scaledAmount = amount;
     const recipientKeyPair = await fetchUserShieldedAccount(recipient, registrarContract);
     if (!recipientKeyPair) {
       throw new Error('Recipient shielded account not found');
@@ -59,9 +60,9 @@ export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
     const { proofArgs, extData } = await generateProof(amount, recipient);
 
     await writeAsync?.({
-      recklesslySetUnpreparedArgs: [proofArgs, extData],
+      recklesslySetUnpreparedArgs: [poolContract.address, proofArgs, extData],
       //@todo Generalize for non-native tokens
-      recklesslySetUnpreparedOverrides: { gasLimit: BN(2_000_000) },
+      recklesslySetUnpreparedOverrides: { value: amount, gasLimit: BN(2_000_000) },
     });
   };
 
@@ -69,20 +70,11 @@ export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
     logger.info(`Simulating supply...`);
     const { proofArgs, extData } = await generateProof(amount, recipient);
     const testWallet = new Wallet(testPrivateKey, provider);
-    const contract = poolContract.connect(testWallet);
-
-    // const tokenAddr = await poolContract.token();
-    // const tokenContract = new Contract(
-    //   '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
-    //   erc20ABI,
-    //   provider
-    // );
-    // const allowance = await tokenContract.allowance(testWallet.address, poolContract.address);
-    // console.log('allowance', allowance.toString());
-    // console.log('testPk', testWallet.address);
+    const contract = wTokenGatewayContract.connect(testWallet);
 
     try {
-      const tx = await contract.callStatic.supply(proofArgs, extData, {
+      const tx = await contract.callStatic.supply(poolContract.address, proofArgs, extData, {
+        value: amount,
         gasLimit: BN(2_000_000),
       });
       logger.info(`Supply simulation successful`, tx);

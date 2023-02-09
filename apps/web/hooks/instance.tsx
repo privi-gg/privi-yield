@@ -1,39 +1,43 @@
 import { useMemo } from 'react';
 import { useNetwork } from 'wagmi';
-import { chains, defaultChainId, Instance, instanceConfig } from 'config/network';
+import { chains, defaultChainId, Instance, InstanceConfig, instanceConfig } from 'config/network';
 
 export type InstanceInfo = {
   token: string;
   chainId: number;
   rpcUrl: string;
-  instance: Instance;
-  instanceAddress: string;
+  instances: Record<string, Instance>;
   wTokenGatewayAddress: string;
 };
 
 const supportedChains = Object.values(chains);
+
 const useInstance = () => {
   const { chain } = useNetwork();
 
-  const value = useMemo<InstanceInfo>(() => {
+  const value = useMemo<InstanceConfig>(() => {
     let chainId = chain?.id as number;
     if (!supportedChains.includes(chainId)) {
       chainId = defaultChainId;
     }
 
+    console.log('chainId', chainId);
     const config = instanceConfig[chainId];
+    console.log('config', config);
+    return config;
 
-    const token = Object.keys(config.instances)[0];
-    const instance = config.instances[token];
+    // const token = Object.keys(config.instances)[0];
+    // const instance = config.instances[token];
 
-    return {
-      chainId,
-      rpcUrl: config.rpcUrl,
-      token,
-      instanceAddress: instance.instanceAddress,
-      instance,
-      wTokenGatewayAddress: config.wTokenGateway,
-    };
+    // return {
+    //   chainId,
+    //   rpcUrl: config.rpcUrl,
+    //   token,
+    //   instanceAddress: instance.pool,
+    //   instance,
+    //   instances: config.instances,
+    //   wTokenGatewayAddress: config.wTokenGateway,
+    // };
   }, [chain]);
 
   return value;

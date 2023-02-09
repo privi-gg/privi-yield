@@ -26,7 +26,7 @@ interface IWithdrawInput {
   recipient: string;
 }
 
-const WithdrawAsset: FC<StackProps> = ({ ...props }) => {
+const WithdrawAssetNative: FC<StackProps> = ({ ...props }) => {
   const [isLoading, setLoading] = useState<boolean>(false);
   const { closeModal, modalData } = useUI();
   const { showErrorToast } = useToast();
@@ -36,7 +36,7 @@ const WithdrawAsset: FC<StackProps> = ({ ...props }) => {
   });
   const { control, handleSubmit, setValue, getValues } = useForm<IWithdrawInput>({
     resolver: yupResolver(schema),
-    defaultValues: { amount: 0.001, recipient: address },
+    defaultValues: { amount: 0.01, recipient: address },
   });
 
   useEffect(() => {
@@ -96,6 +96,7 @@ const WithdrawAsset: FC<StackProps> = ({ ...props }) => {
             label="Enter Amount"
             control={control}
             instance={instance}
+            // token={instance.token}
           />
           <FormTextInput label="Recipient Address" name="recipient" control={control} />
           <Button type="submit" isLoading={isLoading}>
@@ -113,4 +114,4 @@ const WithdrawAsset: FC<StackProps> = ({ ...props }) => {
   );
 };
 
-export default WithdrawAsset;
+export default WithdrawAssetNative;

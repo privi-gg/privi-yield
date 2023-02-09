@@ -9,7 +9,7 @@ export const usePoolTransfer = () => {
   const { instance } = useInstance();
   const txRes = useContractWrite({
     mode: 'recklesslyUnprepared',
-    address: instance.instanceAddress,
+    address: instance.pool,
     abi: pool.abi,
     functionName: 'transfer',
     overrides: {

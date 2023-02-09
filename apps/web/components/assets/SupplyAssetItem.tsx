@@ -6,26 +6,35 @@ import { useGetShieldedBalance } from 'api/account';
 import { useShieldedAccount } from 'contexts/shieldedAccount';
 import { formatUnitsRounded } from 'privi-utils';
 import { TokenPriceText } from 'components/common';
+import { useGetAssetAPY } from 'api/asset';
 
 interface SupplyAssetItemProps extends StackProps {
   instance: Instance;
 }
 
 const SupplyAssetItem: FC<SupplyAssetItemProps> = ({ instance, ...props }) => {
-  const { setModalViewAndOpen } = useUI();
+  const { setModalViewAndOpen, setModalData } = useUI();
   const { keyPair } = useShieldedAccount();
-  const { data } = useGetShieldedBalance({ keyPair });
+  const { data } = useGetShieldedBalance({ keyPair, poolAddress: instance.pool });
+
+  const { data: apyData } = useGetAssetAPY({
+    pool: instance.pool as any,
+    asset: instance.token.address as any,
+  });
 
   const handleSupply = () => {
+    setModalData({ instance });
     setModalViewAndOpen(modalViews.SUPPLY_ASSET);
   };
 
   const handleWithdraw = () => {
+    setModalData({ instance });
     setModalViewAndOpen(modalViews.WITHDRAW_ASSET);
   };
 
   const amount = data?.balance || 0;
-  const amountEth = formatUnitsRounded(amount, instance.decimals, 6);
+  const amountEth = formatUnitsRounded(amount, instance.token.decimals, 6);
+  const apy = Number(apyData || 0).toFixed(2);
 
   return (
     <HStack
@@ -40,17 +49,17 @@ const SupplyAssetItem: FC<SupplyAssetItemProps> = ({ instance, ...props }) => {
       {...props}
     >
       <HStack flex={1} justify="center">
-        <Avatar src={instance.iconUrl} size="sm" />
-        <Text fontWeight="bold">{instance.currency}</Text>
+        <Avatar src={instance.token.iconUrl} size="sm" />
+        <Text fontWeight="bold">{instance.token.symbol}</Text>
       </HStack>
 
       <VStack flex={1}>
         <Text fontWeight="bold">{amountEth}</Text>
-        <TokenPriceText amount={amount} token={instance.currency.toLowerCase()} color="gray.400" />
+        <TokenPriceText amount={amount} token={instance.token.name} color="gray.400" />
       </VStack>
 
       <Box color="green.500" flex={1} justifyContent="center">
-        30%
+        {apy}%
       </Box>
 
       <HStack flex={1} justify="center">

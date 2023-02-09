@@ -15,7 +15,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useShieldedAccount } from 'contexts/shieldedAccount';
 import logger from 'utils/logger';
-import { isDev } from 'config/env';
+import { isDev, testShieldedPk1 } from 'config/env';
 import { useUI } from 'contexts/ui';
 import { APP_NAME, SIGN_MESSAGE } from 'config/constants';
 import { useSignMessage } from 'wagmi';
@@ -35,9 +35,8 @@ interface ILogInInput {
   privateKey: string;
 }
 
-// 0x17127c3cf67b647bbebc58a63911f35903bff485c4aa47295366c485cc6ab2bb
 const defaultValues = {
-  privateKey: isDev ? '0x1f84f832b1f8ca56b5173ca1840b06619a1f8678b90a52e6e5b16654112c393f' : '',
+  privateKey: isDev ? testShieldedPk1 : '',
 };
 
 const AccountLogIn: React.FC<StackProps> = ({ ...props }) => {

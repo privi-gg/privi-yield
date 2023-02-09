@@ -1,7 +1,6 @@
 import { FC } from 'react';
 import { TextProps, Text } from '@chakra-ui/react';
 import { useGetTokenPrice } from 'api/asset/getTokenPrice';
-import useInstance from 'hooks/instance';
 import { BigNumberish } from 'ethers';
 import { formatUnits } from 'privi-utils';
 

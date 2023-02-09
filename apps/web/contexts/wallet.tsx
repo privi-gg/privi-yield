@@ -1,17 +1,24 @@
 import { FC, PropsWithChildren } from 'react';
-import { getDefaultWallets, lightTheme, RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import { getDefaultWallets, lightTheme, RainbowKitProvider, Chain } from '@rainbow-me/rainbowkit';
 import { configureChains, createClient, WagmiConfig } from 'wagmi';
-import { goerli, polygonMumbai } from 'wagmi/chains';
+import { goerli, polygonMumbai, polygon } from 'wagmi/chains';
 import { alchemyProvider } from 'wagmi/providers/alchemy';
-import { keyAlchemyGoerli, keyAlchemyMumbai } from 'config/env';
+import { keyAlchemyGoerli, keyAlchemyPolygonMumbai, keyAlchemyPolygonMainnet } from 'config/env';
 import { APP_NAME } from 'config/constants';
 import fonts from 'theme/fonts';
 import { defaultChainId } from 'config/network';
 
-const { chains, provider } = configureChains(
-  [goerli, polygonMumbai],
-  [alchemyProvider({ apiKey: keyAlchemyGoerli }), alchemyProvider({ apiKey: keyAlchemyMumbai })],
-);
+const defaultChains: Chain[] = [
+  { ...polygon, iconUrl: '/images/matic.png' },
+  // { ...polygonMumbai, iconUrl: '/images/matic.png' },
+  // { ...goerli, iconUrl: '/images/eth.png' },
+];
+
+const { chains, provider } = configureChains(defaultChains, [
+  alchemyProvider({ apiKey: keyAlchemyPolygonMainnet }),
+  // alchemyProvider({ apiKey: keyAlchemyPolygonMumbai }),
+  // alchemyProvider({ apiKey: keyAlchemyGoerli }),
+]);
 
 const { connectors } = getDefaultWallets({
   appName: APP_NAME,
