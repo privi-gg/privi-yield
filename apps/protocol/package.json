@@ -9,7 +9,8 @@
     "test": "cross-env HARDHAT_FORK=true hardhat test",
     "deploy:test": "cross-env HARDHAT_FORK=true hardhat deploy --network hardhat",
     "deploy:goerli": "hardhat deploy --network goerli",
-    "deploy:mumbai": "hardhat deploy --network mumbai"
+    "deploy:mumbai": "hardhat deploy --network mumbai",
+    "deploy:polygon": "hardhat deploy --network polygon"
   },
   "author": "",
   "license": "ISC",
