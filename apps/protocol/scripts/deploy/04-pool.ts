@@ -10,7 +10,7 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { hasher, verifier2, verifier16 } = await deployments.all();
 
   const numLevels = 20;
-  const maxDepositAmount = ethers.utils.parseEther('1');
+  const maxDepositAmount = ethers.utils.parseEther('5');
   const chainId = await getChainId();
 
   const token = Object.keys(networks[chainId].assets)[0];
