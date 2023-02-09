@@ -13,7 +13,6 @@ import "./MerkleTree.sol";
 import {TxType, ProofArgs, ExtData, AaveReserveData} from "./libraries/DataTypes.sol";
 import {WadRayMath} from "./libraries/WadRayMath.sol";
 import {MathUtils} from "./libraries/MathUtils.sol";
-import {Errors} from "./libraries/Errors.sol";
 
 contract Pool is IPool, MerkleTree, ReentrancyGuard {
     using WadRayMath for uint256;
@@ -25,20 +24,20 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
     IVerifier public immutable verifier2;
     IVerifier public immutable verifier16;
 
-    uint256 public maxDepositAmount;
+    uint256 public maxSupplyAmount;
 
     mapping(bytes32 => bool) public nullifierHashes;
 
     constructor(
         uint32 numLevels_,
-        uint256 maxDepositAmount_,
+        uint256 maxSupplyAmount_,
         IERC20 token_,
         IAavePoolAddressProvider aavePoolAddressProvider_,
         address hasher_,
         IVerifier verifier2_,
         IVerifier verifier16_
     ) MerkleTree(numLevels_, hasher_) {
-        maxDepositAmount = maxDepositAmount_;
+        maxSupplyAmount = maxSupplyAmount_;
         token = token_;
         aavePoolAddressProvider = aavePoolAddressProvider_;
         verifier2 = verifier2_;
@@ -49,6 +48,10 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
         (address aavePoolAddress, , uint256 nextLiquidityIndex) = getAavePoolAndReserveData();
 
         uint256 supplyAmount = extData.scaledAmount.rayMul(nextLiquidityIndex);
+
+        if (supplyAmount > maxSupplyAmount) {
+            revert SupplyExceedsMaxLimit(supplyAmount, maxSupplyAmount);
+        }
 
         token.safeTransferFrom(msg.sender, address(this), supplyAmount);
         token.approve(aavePoolAddress, supplyAmount);
@@ -63,7 +66,7 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
         external
         returns (uint256)
     {
-        if (extData.recipient == address(0)) revert Errors.ZeroRecipientAddress();
+        if (extData.recipient == address(0)) revert ZeroRecipientAddress();
 
         _transact(args, extData, TxType.WITHDRAW);
 
@@ -267,18 +270,18 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
         TxType txType
     ) internal nonReentrant {
         if (!isKnownRoot(args.root)) {
-            revert Errors.InvalidMerkleRoot();
+            revert InvalidMerkleRoot();
         }
 
         for (uint256 i = 0; i < args.inputNullifiers.length; ++i) {
             if (isSpent(args.inputNullifiers[i])) {
-                revert Errors.InputNullifierAlreadySpent();
+                revert InputNullifierAlreadySpent();
             }
         }
 
         uint256 calcExtDataHash = uint256(keccak256(abi.encode(extData))) % FIELD_SIZE;
         if (calcExtDataHash != uint256(args.extDataHash)) {
-            revert Errors.InvalidExtDataHash();
+            revert InvalidExtDataHash();
         }
 
         uint256 calculatedPublicScaledAmount = getPublicScaledAmount(
@@ -288,11 +291,11 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
         );
 
         if (calculatedPublicScaledAmount != args.publicScaledAmount) {
-            revert Errors.InvalidPublicScaledAmount();
+            revert InvalidPublicScaledAmount();
         }
 
         if (!verifyProof(args)) {
-            revert Errors.InvalidTxProof();
+            revert InvalidTxProof();
         }
 
         for (uint256 i = 0; i < args.inputNullifiers.length; ++i) {
