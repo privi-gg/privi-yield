@@ -58,7 +58,7 @@ const FormWithdrawAmountInput: FC<FormWithdrawAmountInputProps> = ({
   const error = path(['errors', ...parseErrorKeys(name), 'message'], formState) as string;
 
   const { keyPair } = useShieldedAccount();
-  const { data } = useGetShieldedBalance({ keyPair });
+  const { data } = useGetShieldedBalance({ keyPair, poolAddress: instance.pool });
 
   const setMaxAmount = () => {
     const deltaAmount = parseUnits('0.0001', instance.token.decimals);
