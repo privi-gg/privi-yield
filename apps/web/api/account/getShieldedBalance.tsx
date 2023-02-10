@@ -30,7 +30,7 @@ export const useGetShieldedBalance = ({
   const pool = usePoolContract({ poolAddress });
 
   return useQuery(
-    ['shieldedBalance', keyPair?.publicKey],
+    ['shieldedBalance', keyPair?.publicKey, poolAddress],
     () => getShieldedBalance(keyPair as KeyPair, pool),
     {
       enabled: !!keyPair && !!poolAddress,
