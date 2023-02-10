@@ -4,8 +4,8 @@ import { useProvider } from 'wagmi';
 
 export const useGetBlock = (blockTag: string | number) => {
   const provider = useProvider();
-  const { chainId } = useInstance();
-  return useQuery(['block', blockTag, chainId], () => provider.getBlock(blockTag), {
+  // const { chainId } = useInstance();
+  return useQuery(['block', blockTag], () => provider.getBlock(blockTag), {
     enabled: !!blockTag,
   });
 };

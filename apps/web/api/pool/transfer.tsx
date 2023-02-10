@@ -6,10 +6,10 @@ import useInstance from 'hooks/instance';
 import logger from 'utils/logger';
 
 export const usePoolTransfer = () => {
-  const { instance } = useInstance();
+  const { instances } = useInstance();
   const txRes = useContractWrite({
     mode: 'recklesslyUnprepared',
-    address: instance.pool,
+    address: instances['wmatic'].pool,
     abi: pool.abi,
     functionName: 'transfer',
     overrides: {
