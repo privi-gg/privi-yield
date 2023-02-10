@@ -6,11 +6,11 @@ import { registrarAddress } from 'config/network';
 import { Contract } from 'ethers';
 import useInstance from './instance';
 
-export const usePoolContract = () => {
+export const usePoolContract = ({ poolAddress }: { poolAddress: string }) => {
   const provider = useProvider();
-  const { instance } = useInstance();
+  // const { instance } = useInstance();
   return useContract({
-    address: instance.instanceAddress,
+    address: poolAddress,
     abi: pool.abi,
     signerOrProvider: provider,
   }) as Contract;
@@ -18,7 +18,7 @@ export const usePoolContract = () => {
 
 export const useWTokenGatewayContract = () => {
   const provider = useProvider();
-  const { wTokenGatewayAddress: wTokenGatewayAddress } = useInstance();
+  const { wTokenGateway: wTokenGatewayAddress } = useInstance();
   return useContract({
     address: wTokenGatewayAddress,
     abi: wTokenGateway.abi,

@@ -7,6 +7,15 @@ interface IPool {
     event CommitmentInserted(bytes32 commitment, uint256 leafIndex, bytes encryptedOutput);
     event NullifierUsed(bytes32 nullifier);
 
+    error InvalidTxProof();
+    error InvalidMerkleRoot();
+    error InputNullifierAlreadySpent();
+    error InvalidExtDataHash();
+    error InvalidPublicScaledAmount();
+    error InvalidScaledAmount(uint256 scaledAmount);
+    error ZeroRecipientAddress();
+    error SupplyExceedsMaxLimit(uint256 amount, uint256 maxAmountAllowed);
+
     function supply(ProofArgs calldata args, ExtData calldata extData) external returns (uint256);
 
     function withdraw(ProofArgs calldata args, ExtData calldata extData) external returns (uint256);

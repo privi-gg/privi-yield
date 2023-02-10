@@ -1,23 +1,30 @@
 import { useEffect } from 'react';
 import { useContractWrite, useProvider, useWaitForTransaction } from 'wagmi';
-import { BN } from 'privi-utils';
-import pool from 'abi/pool.json';
+import { BN, parseEther } from 'privi-utils';
+// import pool from 'abi/pool.json';
+import wTokenGateway from 'abi/wTokenGateway.json';
 import logger from 'utils/logger';
-import { usePoolContract } from 'hooks/contracts';
+import { usePoolContract, useRegistrarContract, useWTokenGatewayContract } from 'hooks/contracts';
 import { BigNumber, Wallet } from 'ethers';
 import { prepareWithdrawProof } from 'utils/proof';
+import { fetchUserShieldedAccount } from 'utils/pool';
 import { useShieldedAccount } from 'contexts/shieldedAccount';
 import { testPrivateKey } from 'config/env';
 
-export const usePoolWithdraw = ({ poolAddress }: { poolAddress: string }) => {
+export const usePoolWithdrawNative = ({ poolAddress }: { poolAddress: string }) => {
   const poolContract = usePoolContract({ poolAddress });
+  const wTokenGatewayContract = useWTokenGatewayContract();
+  const registrarContract = useRegistrarContract();
   const { keyPair } = useShieldedAccount();
   const provider = useProvider();
 
   const { data, error, writeAsync, ...rest } = useContractWrite({
     mode: 'recklesslyUnprepared',
-    address: poolContract.address,
-    abi: pool.abi,
+    // address: instance.instanceAddress,
+    // abi: pool.abi,
+    //@todo Generalize for non-native tokens
+    address: wTokenGatewayContract.address,
+    abi: wTokenGateway.abi,
     functionName: 'withdraw',
     overrides: {
       gasLimit: BN(2_000_000),
@@ -37,7 +44,8 @@ export const usePoolWithdraw = ({ poolAddress }: { poolAddress: string }) => {
       pool: poolContract,
       from: keyPair,
       scaledAmount,
-      recipient,
+      //@todo Generalize for non-native tokens
+      recipient: wTokenGatewayContract.address,
     });
 
     return { proofArgs, extData };
@@ -47,7 +55,7 @@ export const usePoolWithdraw = ({ poolAddress }: { poolAddress: string }) => {
     const { proofArgs, extData } = await generateProof(amount, recipient);
 
     await writeAsync?.({
-      recklesslySetUnpreparedArgs: [proofArgs, extData],
+      recklesslySetUnpreparedArgs: [poolContract.address, recipient, proofArgs, extData],
       recklesslySetUnpreparedOverrides: { gasLimit: BN(2_000_000) },
     });
   };
@@ -56,12 +64,18 @@ export const usePoolWithdraw = ({ poolAddress }: { poolAddress: string }) => {
     logger.info(`Simulating withdraw...`);
     const { proofArgs, extData } = await generateProof(amount, recipient);
     const testWallet = new Wallet(testPrivateKey, provider);
-    const contract = poolContract.connect(testWallet);
+    const contract = wTokenGatewayContract.connect(testWallet);
 
     try {
-      const tx = await contract.callStatic.withdraw(proofArgs, extData, {
-        gasLimit: BN(2_000_000),
-      });
+      const tx = await contract.callStatic.withdraw(
+        poolContract.address,
+        recipient,
+        proofArgs,
+        extData,
+        {
+          gasLimit: BN(2_000_000),
+        }
+      );
       logger.info(`Withdraw simulation successful`, tx);
       return true;
     } catch (error) {

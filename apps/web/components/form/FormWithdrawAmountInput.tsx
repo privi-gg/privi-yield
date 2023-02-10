@@ -15,14 +15,14 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { Control, useController } from 'react-hook-form';
-import useInstance from 'hooks/instance';
 import { TokenPriceText } from 'components/common';
 import { BN, formatUnits, formatUnitsRounded, parseUnits } from 'privi-utils';
 import { useGetShieldedBalance } from 'api/account';
 import { useShieldedAccount } from 'contexts/shieldedAccount';
+import { Instance } from 'config/network';
 
 interface FormWithdrawAmountInputProps extends FormControlProps {
-  token: string;
+  instance: Instance;
   name: string;
   label?: string;
   defaultValue?: string | number;
@@ -41,7 +41,7 @@ const parseErrorKeys = (name: string): Array<string> => {
 };
 
 const FormWithdrawAmountInput: FC<FormWithdrawAmountInputProps> = ({
-  token,
+  instance,
   name,
   label,
   control,
@@ -54,7 +54,6 @@ const FormWithdrawAmountInput: FC<FormWithdrawAmountInputProps> = ({
   _input,
   ...props
 }) => {
-  const { instance } = useInstance();
   const { field, formState } = useController({ name, control, defaultValue });
   const error = path(['errors', ...parseErrorKeys(name), 'message'], formState) as string;
 
@@ -62,20 +61,20 @@ const FormWithdrawAmountInput: FC<FormWithdrawAmountInputProps> = ({
   const { data } = useGetShieldedBalance({ keyPair });
 
   const setMaxAmount = () => {
-    const deltaAmount = parseUnits('0.0001', 18);
+    const deltaAmount = parseUnits('0.0001', instance.token.decimals);
     const balance = BN(data?.balance || 0).sub(deltaAmount);
-    const max = formatUnits(balance, 18);
+    const max = formatUnits(balance, instance.token.decimals);
     field.onChange(Number(max));
   };
 
   let amountWei;
   try {
-    amountWei = parseUnits(field.value, 18);
+    amountWei = parseUnits(field.value, instance.token.decimals);
   } catch (error) {
     amountWei = 0;
   }
 
-  const balance = formatUnitsRounded(data?.balance || 0, 18, 5);
+  const balance = formatUnitsRounded(data?.balance || 0, instance.token.decimals, 5);
 
   return (
     <FormControl
@@ -90,7 +89,7 @@ const FormWithdrawAmountInput: FC<FormWithdrawAmountInputProps> = ({
       <HStack justify="space-between" alignItems="center" pt={2} px={4}>
         <FormLabel fontWeight="semibold">{label}</FormLabel>
         <Text color="gray.500" fontSize="sm">
-          {`Balance: ${balance} ${instance.currency}`}
+          {`Balance: ${balance} ${instance.token.symbol}`}
         </Text>
       </HStack>
 
@@ -120,15 +119,20 @@ const FormWithdrawAmountInput: FC<FormWithdrawAmountInputProps> = ({
             py={2}
             w={32}
           >
-            <Avatar src={instance.iconUrl} size="xs" />
+            <Avatar src={instance.token.iconUrl} size="xs" />
             <Text ml={1} fontSize="sm">
-              {instance.currency}
+              {instance.token.symbol}
             </Text>
           </Card>
         </HStack>
 
         <HStack justify="space-between" alignItems="center">
-          <TokenPriceText color="gray.500" fontSize="sm" amount={amountWei} token={token} />
+          <TokenPriceText
+            color="gray.500"
+            fontSize="sm"
+            amount={amountWei}
+            token={instance.token.name}
+          />
           <Button variant="ghost" size="sm" onClick={setMaxAmount}>
             MAX
           </Button>

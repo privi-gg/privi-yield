@@ -20,14 +20,20 @@ export async function getShieldedBalance(keyPair: KeyPair, pool: Contract) {
   };
 }
 
-export const useGetShieldedBalance = ({ keyPair }: { keyPair?: KeyPair }) => {
-  const pool = usePoolContract();
+export const useGetShieldedBalance = ({
+  keyPair,
+  poolAddress,
+}: {
+  keyPair?: KeyPair;
+  poolAddress: string;
+}) => {
+  const pool = usePoolContract({ poolAddress });
 
   return useQuery(
-    ['shieldedBalance', keyPair?.publicKey],
+    ['shieldedBalance', keyPair?.publicKey, poolAddress],
     () => getShieldedBalance(keyPair as KeyPair, pool),
     {
-      enabled: !!keyPair,
+      enabled: !!keyPair && !!poolAddress,
     }
   );
 };

@@ -10,6 +10,7 @@ const tokenIds: Record<string, string> = {
   weth: 'ethereum',
   matic: 'matic-network',
   wmatic: 'matic-network',
+  usdt: 'tether',
 };
 
 interface ITokenPriceInput {

@@ -23,11 +23,25 @@ const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
+      // forking: {
+      //   url: rpcGoerli,
+      //   blockNumber: forkBlock.goerli,
+      //   enabled: forkEnabled,
+      // },
+      // forking: {
+      //   url: rpcPolygonMumbai,
+      //   blockNumber: forkBlock.mumbai,
+      //   enabled: forkEnabled,
+      // },
       forking: {
-        url: rpcGoerli,
-        blockNumber: forkBlock.goerli,
+        url: rpcPolygonMainnet,
+        blockNumber: forkBlock.polygon,
         enabled: forkEnabled,
       },
+    },
+    polygon: {
+      url: rpcPolygonMainnet,
+      accounts: privateKeys,
     },
     mumbai: {
       url: rpcPolygonMumbai,

@@ -4,6 +4,14 @@ type Network = {
   assets: Record<string, string>;
 };
 
+const polygon: Network = {
+  chainId: '137',
+  aavePoolAddressProvider: '0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb',
+  assets: {
+    wmatic: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
+  },
+};
+
 const goerli: Network = {
   chainId: '5',
   aavePoolAddressProvider: '0xC911B590248d127aD18546B186cC6B324e99F02c',
@@ -27,6 +35,7 @@ const hardhat: Network = {
 };
 
 export const networks: Record<string, Network> = {
+  [polygon.chainId]: polygon,
   [goerli.chainId]: goerli,
   [polygonMumbai.chainId]: polygonMumbai,
   [hardhat.chainId]: hardhat,
