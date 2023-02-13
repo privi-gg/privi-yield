@@ -21,9 +21,7 @@ const useInstance = () => {
       chainId = defaultChainId;
     }
 
-    console.log('chainId', chainId);
     const config = instanceConfig[chainId];
-    console.log('config', config);
     return config;
 
     // const token = Object.keys(config.instances)[0];
