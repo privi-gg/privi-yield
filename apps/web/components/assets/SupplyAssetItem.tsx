@@ -24,7 +24,11 @@ const SupplyAssetItem: FC<SupplyAssetItemProps> = ({ instance, ...props }) => {
 
   const handleSupply = () => {
     setModalData({ instance });
-    setModalViewAndOpen(modalViews.SUPPLY_ASSET);
+    if (instance.token.isNative) {
+      setModalViewAndOpen(modalViews.SUPPLY_ASSET_NATIVE);
+    } else {
+      setModalViewAndOpen(modalViews.SUPPLY_ASSET);
+    }
   };
 
   const handleWithdraw = () => {

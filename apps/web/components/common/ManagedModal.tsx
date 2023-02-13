@@ -1,6 +1,11 @@
 import { Modal, ModalOverlay, ModalContent, ModalBody } from '@chakra-ui/react';
 import { AccountLogIn, AccountRegister } from 'components/account';
-import { SupplyAsset, WithdrawAsset } from 'components/assets';
+import {
+  SupplyAsset,
+  WithdrawAsset,
+  SupplyAssetNative,
+  WithdrawAssetNative,
+} from 'components/assets';
 
 import { modalViews, useUI } from 'contexts/ui';
 
@@ -15,7 +20,9 @@ const ManagedModal: React.FC = () => {
           {modalView === modalViews.ACCOUNT_REGISTER && <AccountRegister />}
           {modalView === modalViews.ACCOUNT_LOGIN && <AccountLogIn />}
           {modalView === modalViews.SUPPLY_ASSET && <SupplyAsset />}
+          {modalView === modalViews.SUPPLY_ASSET_NATIVE && <SupplyAssetNative />}
           {modalView === modalViews.WITHDRAW_ASSET && <WithdrawAsset />}
+          {modalView === modalViews.WITHDRAW_ASSET_NATIVE && <WithdrawAssetNative />}
           {/* {modalView === 'VIEW_2' && <VIEW2 />} */}
         </ModalBody>
       </ModalContent>
