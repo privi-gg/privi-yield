@@ -76,6 +76,7 @@ const WithdrawAssetNative: FC<StackProps> = ({ ...props }) => {
     await testAsync(amount, data.recipient)
       .catch((err) => {
         logger.error(err);
+        showErrorToast({ description: err.message });
       })
       .finally(() => setLoading(false));
   };
@@ -96,7 +97,6 @@ const WithdrawAssetNative: FC<StackProps> = ({ ...props }) => {
             label="Enter Amount"
             control={control}
             instance={instance}
-            // token={instance.token}
           />
           <FormTextInput label="Recipient Address" name="recipient" control={control} />
           <Button type="submit" isLoading={isLoading}>

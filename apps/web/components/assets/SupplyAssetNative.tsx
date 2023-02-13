@@ -6,7 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { FormSupplyAmountInput, FormTextInput } from 'components/form';
 import logger from 'utils/logger';
-import { usePoolSupply } from 'api/pool';
+import { usePoolSupplyNative } from 'api/pool';
 import { parseEther } from 'privi-utils';
 import { isDev } from 'config/env';
 import { useUI } from 'contexts/ui';
@@ -26,12 +26,12 @@ interface ISupplyInput {
   recipient: string;
 }
 
-const SupplyAsset: FC<StackProps> = ({ ...props }) => {
+const SupplyAssetNative: FC<StackProps> = ({ ...props }) => {
   const [isLoading, setLoading] = useState<boolean>(false);
   const { closeModal, modalData } = useUI();
   const { showErrorToast } = useToast();
   const { address } = useAccount();
-  const { supplyAsync, testAsync } = usePoolSupply({
+  const { supplyAsync, testAsync } = usePoolSupplyNative({
     poolAddress: modalData?.instance?.pool,
   });
   const { control, handleSubmit, setValue, getValues } = useForm<ISupplyInput>({
@@ -113,4 +113,4 @@ const SupplyAsset: FC<StackProps> = ({ ...props }) => {
   );
 };
 
-export default SupplyAsset;
+export default SupplyAssetNative;

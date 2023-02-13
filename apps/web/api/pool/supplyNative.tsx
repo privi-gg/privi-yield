@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useContractWrite, useProvider, useWaitForTransaction } from 'wagmi';
 import { BN, parseEther } from 'privi-utils';
-// import pool from 'abi/pool.json';
 import wTokenGateway from 'abi/wTokenGateway.json';
 import logger from 'utils/logger';
 import { usePoolContract, useRegistrarContract, useWTokenGatewayContract } from 'hooks/contracts';
@@ -22,9 +21,6 @@ export const usePoolSupplyNative = ({ poolAddress }: { poolAddress: string }) =>
 
   const { data, error, writeAsync, ...rest } = useContractWrite({
     mode: 'recklesslyUnprepared',
-    // address: instance.instanceAddress,
-    // abi: pool.abi,
-    //@todo Generalize for non-native tokens
     address: wTokenGatewayContract.address,
     abi: wTokenGateway.abi,
     functionName: 'supply',
@@ -61,7 +57,6 @@ export const usePoolSupplyNative = ({ poolAddress }: { poolAddress: string }) =>
 
     await writeAsync?.({
       recklesslySetUnpreparedArgs: [poolContract.address, proofArgs, extData],
-      //@todo Generalize for non-native tokens
       recklesslySetUnpreparedOverrides: { value: amount, gasLimit: BN(2_000_000) },
     });
   };
