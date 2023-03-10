@@ -1,6 +1,6 @@
 import { useContract, useProvider } from 'wagmi';
 import pool from 'abi/pool.json';
-import registrar from 'abi/register.json';
+import registrar from 'abi/registrar.json';
 import wTokenGateway from 'abi/wTokenGateway.json';
 import { Contract } from 'ethers';
 import { useInstance } from 'contexts/instance';
