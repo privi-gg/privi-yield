@@ -1,7 +1,7 @@
 import { type BigNumberish } from 'ethers';
 import { ethers } from 'ethers';
 import { encrypt, decrypt, getEncryptionPublicKey } from '@metamask/eth-sig-util';
-import { poseidonHash, toFixedHex } from './helpers';
+import { poseidonHash, toFixedHex } from 'privi-utils';
 
 const { BigNumber, Wallet } = ethers;
 
@@ -106,7 +106,7 @@ export class KeyPair {
         publicKey: this.encryptionKey,
         data: bytes.toString('base64'),
         version: ENCRYPTION_VERSION,
-      }),
+      })
     );
   }
 

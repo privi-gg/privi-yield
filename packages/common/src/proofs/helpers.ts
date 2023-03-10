@@ -1,10 +1,10 @@
 import { BigNumber, BigNumberish, utils } from 'ethers';
-import { stringifyBigInts, toFixedHex } from '../helpers';
+import { stringifyBNs, toFixedHex } from 'privi-utils';
 import { CircuitPath, ExtData } from './types';
 
 export function hashExtData(
   { recipient, scaledAmount, relayer, scaledFee, encryptedOutput1, encryptedOutput2 }: ExtData,
-  fieldSize: BigNumberish,
+  fieldSize: BigNumberish
 ) {
   const abi = new utils.AbiCoder();
 
@@ -21,7 +21,7 @@ export function hashExtData(
         encryptedOutput1,
         encryptedOutput2,
       },
-    ],
+    ]
   );
   const hash = utils.keccak256(encodedData);
   return BigNumber.from(hash).mod(fieldSize);
@@ -33,10 +33,10 @@ export const generateSnarkProof = async ({
   circuitPath,
 }: {
   snarkJs: any;
-  inputs: object;
+  inputs: any;
   circuitPath: CircuitPath;
 }) => {
-  return snarkJs.groth16.fullProve(stringifyBigInts(inputs), circuitPath.circuit, circuitPath.zKey);
+  return snarkJs.groth16.fullProve(stringifyBNs(inputs), circuitPath.circuit, circuitPath.zKey);
 };
 
 export const generateSnarkProofSolidity = async ({
