@@ -1,21 +1,22 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { networks } from '../../config';
+import { networks } from '../config';
 
 const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts, getChainId } = hre;
+  const { deployments, getNamedAccounts, getChainId, network } = hre;
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
   const chainId = await getChainId();
 
-  const token = Object.keys(networks[chainId].assets)[0];
-  const tokenAddress = networks[chainId].assets[token];
+  const wToken = networks[chainId].nativeWToken;
+  const wTokenAddress = networks[chainId].tokens[wToken].address;
 
-  await deploy('wTokenGateway', {
+  const deploymentName = `${network.name}-wTokenGateway`;
+  await deploy(deploymentName, {
     from: deployer,
     contract: 'WTokenGateway',
-    args: [tokenAddress],
+    args: [wTokenAddress],
     log: true,
     autoMine: true,
   });
