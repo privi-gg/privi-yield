@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { useContractWrite, useWaitForTransaction } from 'wagmi';
 import { BN } from 'privi-utils';
-import registrar from 'abi/register.json';
-import { registrarAddress } from 'config/network';
+import registrar from 'abi/registrar.json';
 import logger from 'utils/logger';
+import { useInstance } from 'contexts/instance';
 
-export const useRegisterAccount = () => {
+export const useRegisterAccount = (): ReturnType<typeof useContractWrite> => {
+  const { registrar: registrarAddress } = useInstance();
+
   const txRes = useContractWrite({
     mode: 'recklesslyUnprepared',
     address: registrarAddress,

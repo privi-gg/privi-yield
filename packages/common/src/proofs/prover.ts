@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers';
-import { toFixedHex } from '../helpers';
+import { toFixedHex } from 'privi-utils';
 import { Utxo } from '../utxo';
 import { generateSnarkProofSolidity, hashExtData } from './helpers';
 import { GenerateProofArgs, PrepareTxArgs, ProofGeneratorConstructorArgs } from './types';

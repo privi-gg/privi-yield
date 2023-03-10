@@ -10,7 +10,7 @@ describe('MerkleTree', function () {
   async function fixture() {
     const hasher = await deployHasher();
     const merkleTree = await deployContract('MerkleTreeMock', TREE_HEIGHT, hasher.address);
-    // await merkleTree.initialize();
+    await merkleTree.initialize();
     return { hasher, merkleTree };
   }
 

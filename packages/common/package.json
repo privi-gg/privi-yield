@@ -16,10 +16,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aave/math-utils": "^1.13.6",
+    "@metamask/eth-sig-util": "^5.0.0",
     "buffer": "^6.0.3",
     "ethers": "^5.7.2",
-    "@metamask/eth-sig-util": "^5.0.0",
-    "fixed-merkle-tree": "^0.7.3"
+    "fixed-merkle-tree": "^0.7.3",
+    "privi-utils": "https://github.com/privi-gg/privi-utils.git#77e45aee0d65703b735f798d2ee0210085470f36"
   },
   "devDependencies": {
     "@types/chai": "^4.3.4",

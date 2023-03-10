@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
-import {AaveReserveData} from "../libraries/DataTypes.sol";
+import {AaveReserveData} from "../helpers/DataTypes.sol";
 
 interface IAavePool {
     function supply(

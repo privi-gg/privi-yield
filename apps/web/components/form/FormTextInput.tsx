@@ -65,7 +65,7 @@ const FormTextInput: FC<FormInputProps> = ({
         <Input
           variant="unstyled"
           fontWeight="bold"
-          fontSize="lg"
+          fontSize="md"
           size="lg"
           type={type}
           onBlur={field.onBlur}

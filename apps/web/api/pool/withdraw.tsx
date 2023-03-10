@@ -8,6 +8,7 @@ import { BigNumber, Wallet } from 'ethers';
 import { prepareWithdrawProof } from 'utils/proof';
 import { useShieldedAccount } from 'contexts/shieldedAccount';
 import { testPrivateKey } from 'config/env';
+import { getScaledAmount } from '@privi-yield/common';
 
 export const usePoolWithdraw = ({ poolAddress }: { poolAddress: string }) => {
   const poolContract = usePoolContract({ poolAddress });
@@ -31,7 +32,7 @@ export const usePoolWithdraw = ({ poolAddress }: { poolAddress: string }) => {
       throw new Error('Please login to withdraw');
     }
 
-    const scaledAmount = await poolContract.getAaveScaledAmount(amount);
+    const scaledAmount = await getScaledAmount(amount, poolContract);
 
     const { proofArgs, extData } = await prepareWithdrawProof({
       pool: poolContract,
@@ -43,8 +44,17 @@ export const usePoolWithdraw = ({ poolAddress }: { poolAddress: string }) => {
     return { proofArgs, extData };
   };
 
+  const verifyProof = async (proofArgs: any) => {
+    const isValid = await poolContract.verifyProof(proofArgs);
+    if (!isValid) {
+      throw new Error(`Invalid proof`);
+    }
+    logger.info(`Proof validated!`);
+  };
+
   const withdrawAsync = async (amount: BigNumber, recipient: string) => {
     const { proofArgs, extData } = await generateProof(amount, recipient);
+    await verifyProof(proofArgs);
 
     await writeAsync?.({
       recklesslySetUnpreparedArgs: [proofArgs, extData],
@@ -55,6 +65,8 @@ export const usePoolWithdraw = ({ poolAddress }: { poolAddress: string }) => {
   const testAsync = async (amount: BigNumber, recipient: string) => {
     logger.info(`Simulating withdraw...`);
     const { proofArgs, extData } = await generateProof(amount, recipient);
+    await verifyProof(proofArgs);
+
     const testWallet = new Wallet(testPrivateKey, provider);
     const contract = poolContract.connect(testWallet);
 

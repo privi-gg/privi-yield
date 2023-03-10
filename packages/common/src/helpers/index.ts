@@ -1,14 +1,7 @@
 import { ethers, type BigNumberish } from 'ethers';
 import { Buffer } from 'buffer';
-//@ts-ignore
-import { poseidon } from 'xcircomlib';
-
-export * from './eth';
 
 const { BigNumber } = ethers;
-
-export const poseidonHash = (...inputs: any[]) =>
-  BigNumber.from(poseidon([...inputs])).toHexString();
 
 export const toFixedBuffer = (value: BigNumberish, length: number) =>
   Buffer.from(
@@ -16,5 +9,5 @@ export const toFixedBuffer = (value: BigNumberish, length: number) =>
       .toHexString()
       .slice(2)
       .padStart(length * 2, '0'),
-    'hex',
+    'hex'
   );

@@ -6,7 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { FormWithdrawAmountInput, FormTextInput } from 'components/form';
 import logger from 'utils/logger';
-import { usePoolWithdraw } from 'api/pool';
+import { usePoolWithdrawNative } from 'api/pool';
 import { parseEther } from 'privi-utils';
 import { isDev } from 'config/env';
 import { useUI } from 'contexts/ui';
@@ -31,7 +31,7 @@ const WithdrawAssetNative: FC<StackProps> = ({ ...props }) => {
   const { closeModal, modalData } = useUI();
   const { showErrorToast } = useToast();
   const { address } = useAccount();
-  const { withdrawAsync, testAsync } = usePoolWithdraw({
+  const { withdrawAsync, testAsync } = usePoolWithdrawNative({
     poolAddress: modalData?.instance?.pool,
   });
   const { control, handleSubmit, setValue, getValues } = useForm<IWithdrawInput>({

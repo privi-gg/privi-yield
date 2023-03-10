@@ -6,14 +6,15 @@ import {
   SupplyAssetNative,
   WithdrawAssetNative,
 } from 'components/assets';
+import { NetworkSwitch } from 'components/wallet';
 
 import { modalViews, useUI } from 'contexts/ui';
 
 const ManagedModal: React.FC = () => {
-  const { isModalOpen, closeModal, modalView } = useUI();
+  const { isModalOpen, closeModal, modalView, modalConfig } = useUI();
 
   return (
-    <Modal isOpen={isModalOpen} onClose={closeModal} size="md">
+    <Modal isOpen={isModalOpen} onClose={closeModal} size="md" {...modalConfig}>
       <ModalOverlay />
       <ModalContent>
         <ModalBody p={0}>
@@ -23,7 +24,7 @@ const ManagedModal: React.FC = () => {
           {modalView === modalViews.SUPPLY_ASSET_NATIVE && <SupplyAssetNative />}
           {modalView === modalViews.WITHDRAW_ASSET && <WithdrawAsset />}
           {modalView === modalViews.WITHDRAW_ASSET_NATIVE && <WithdrawAssetNative />}
-          {/* {modalView === 'VIEW_2' && <VIEW2 />} */}
+          {modalView === modalViews.NETWORK_SWITCH && <NetworkSwitch />}
         </ModalBody>
       </ModalContent>
     </Modal>

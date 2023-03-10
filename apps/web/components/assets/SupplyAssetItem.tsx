@@ -6,20 +6,21 @@ import { useGetShieldedBalance } from 'api/account';
 import { useShieldedAccount } from 'contexts/shieldedAccount';
 import { formatUnitsRounded } from 'privi-utils';
 import { TokenPriceText } from 'components/common';
-import { useGetAssetAPY } from 'api/asset';
+import { useGetAssetAPY } from 'api/token';
 
 interface SupplyAssetItemProps extends StackProps {
   instance: Instance;
+  aavePool: string;
 }
 
-const SupplyAssetItem: FC<SupplyAssetItemProps> = ({ instance, ...props }) => {
+const SupplyAssetItem: FC<SupplyAssetItemProps> = ({ aavePool, instance, ...props }) => {
   const { setModalViewAndOpen, setModalData } = useUI();
   const { keyPair } = useShieldedAccount();
   const { data } = useGetShieldedBalance({ keyPair, poolAddress: instance.pool });
 
   const { data: apyData } = useGetAssetAPY({
-    pool: instance.pool as any,
-    asset: instance.token.address as any,
+    aavePool: aavePool as any,
+    token: (instance.token.isNative ? instance.token.wToken : instance.token.address) as any,
   });
 
   const handleSupply = () => {
@@ -33,7 +34,11 @@ const SupplyAssetItem: FC<SupplyAssetItemProps> = ({ instance, ...props }) => {
 
   const handleWithdraw = () => {
     setModalData({ instance });
-    setModalViewAndOpen(modalViews.WITHDRAW_ASSET);
+    if (instance.token.isNative) {
+      setModalViewAndOpen(modalViews.WITHDRAW_ASSET_NATIVE);
+    } else {
+      setModalViewAndOpen(modalViews.WITHDRAW_ASSET);
+    }
   };
 
   const amount = data?.balance || 0;

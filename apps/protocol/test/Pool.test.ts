@@ -2,14 +2,16 @@ import { expect } from 'chai';
 import { artifacts, ethers } from 'hardhat';
 import { loadFixture, mine, time } from '@nomicfoundation/hardhat-network-helpers';
 import { deployContract } from './helpers/utils';
-import { AAVE_POOL_ADDRESS_PROVIDER, ASSET_WETH, TREE_HEIGHT } from './helpers/constants';
+import {
+  AAVE_POOL_ADDRESS_PROVIDER,
+  ASSET_WETH as ASSET_WTOKEN,
+  TREE_HEIGHT,
+} from './helpers/constants';
+// import { AAVE_POOL_ADDRESS_PROVIDER, ASSET_WMATIC, TREE_HEIGHT } from './helpers/constants';
 import { transactSupply, transactWithdraw, transactTransfer } from './helpers/proofs';
-import { KeyPair, Utxo } from '@privi-yield/common';
+import { getScaledAmount, getUserBalance, KeyPair, Utxo } from '@privi-yield/common';
 import { deployHasher } from './helpers/hasher';
-import { randomHex } from 'privi-utils';
-
-const { utils } = ethers;
-const { parseEther } = utils;
+import { parseEther, randomHex } from 'privi-utils';
 
 const aavePoolAddressProviderArtifact = artifacts.readArtifactSync('IAavePoolAddressProvider');
 const aavePoolArtifact = artifacts.readArtifactSync('IAavePool');
@@ -27,32 +29,40 @@ describe('Pool', function () {
       aavePoolAddressProviderArtifact,
       AAVE_POOL_ADDRESS_PROVIDER
     );
-    const aavePoolAddress = await aavePoolAddressProvider.getPool();
-    const aavePool = await ethers.getContractAtFromArtifact(aavePoolArtifact, aavePoolAddress);
-    const reserve = await aavePool.getReserveData(ASSET_WETH);
 
-    const token = await ethers.getContractAtFromArtifact(wTokenArtifact, ASSET_WETH);
+    const aavePoolAddress = await aavePoolAddressProvider.getPool();
+
+    const aavePool = await ethers.getContractAtFromArtifact(aavePoolArtifact, aavePoolAddress);
+    const reserve = await aavePool.getReserveData(ASSET_WTOKEN);
+
+    const token = await ethers.getContractAtFromArtifact(wTokenArtifact, ASSET_WTOKEN);
     const aToken = await ethers.getContractAtFromArtifact(aTokenArtifact, reserve.aTokenAddress);
 
     const hasher = await deployHasher();
     const verifier2 = await deployContract('contracts/verifiers/Verifier2.sol:Verifier');
     const verifier16 = await deployContract('contracts/verifiers/Verifier16.sol:Verifier');
-    const maxDepositAmt = utils.parseEther('10');
+    const sanctionsList = await deployContract('SanctionsListMock');
+    const maxSupplyAmt = parseEther('100');
 
-    const pool = await deployContract(
+    const poolImpl = await deployContract(
       'Pool',
       TREE_HEIGHT,
-      maxDepositAmt,
       token.address,
       AAVE_POOL_ADDRESS_PROVIDER,
       hasher.address,
       verifier2.address,
-      verifier16.address
+      verifier16.address,
+      sanctionsList.address
     );
+
+    const { data: initializeData } = await poolImpl.populateTransaction.initialize(maxSupplyAmt);
+    const poolProxy = await deployContract('PoolProxyMock', poolImpl.address, initializeData);
+
+    const pool = poolImpl.attach(poolProxy.address);
 
     const [u1, u2, u3] = await ethers.getSigners();
 
-    const amount = utils.parseEther('8000').toString();
+    const amount = parseEther('8000').toString();
     await token.connect(u1).deposit({ value: amount });
     await token.connect(u2).deposit({ value: amount });
     await token.connect(u3).deposit({ value: amount });
@@ -68,21 +78,21 @@ describe('Pool', function () {
       const { pool, token, aToken } = await loadFixture(fixture);
 
       const keyPair = KeyPair.createRandom();
-      const amount = utils.parseEther('1');
-
-      let [scaledAmount] = await pool.getAaveScaledAmountAdjusted(amount, DELTA_SEC);
+      const amount = parseEther('1');
+      const scaledAmount = await getScaledAmount(amount, pool);
 
       const supplyUtxo = new Utxo({ scaledAmount, keyPair });
       await transactSupply({ pool, amount, outputs: [supplyUtxo] });
 
       let poolATokenBalance = await aToken.balanceOf(pool.address);
-      let userBalance = await pool.getBalance(scaledAmount);
+      let userBalance = await getUserBalance(scaledAmount, pool);
       expect(poolATokenBalance).to.be.closeTo(userBalance, TOLERANCE);
 
       await time.increase(1000 * ONE_DAY);
 
       poolATokenBalance = await aToken.balanceOf(pool.address);
-      userBalance = await pool.getBalance(scaledAmount);
+      userBalance = await getUserBalance(scaledAmount, pool);
+
       expect(poolATokenBalance).to.be.closeTo(userBalance, TOLERANCE);
     }).timeout(80000);
 
@@ -90,27 +100,27 @@ describe('Pool', function () {
       const { pool, token, aToken } = await loadFixture(fixture);
 
       const keyPair1 = KeyPair.createRandom();
-      const amount1 = utils.parseEther('1');
-      const [scaledAmount1] = await pool.getAaveScaledAmountAdjusted(amount1, DELTA_SEC);
+      const amount1 = parseEther('1');
+      const scaledAmount1 = await getScaledAmount(amount1, pool);
       const supplyUtxo1 = new Utxo({ scaledAmount: scaledAmount1, keyPair: keyPair1 });
       await transactSupply({ pool, amount: amount1, outputs: [supplyUtxo1] });
 
       const keyPair2 = KeyPair.createRandom();
-      const amount2 = utils.parseEther('1');
-      const [scaledAmount2] = await pool.getAaveScaledAmountAdjusted(amount2, DELTA_SEC);
+      const amount2 = parseEther('1');
+      const scaledAmount2 = await getScaledAmount(amount2, pool);
       const supplyUtxo2 = new Utxo({ scaledAmount: scaledAmount2, keyPair: keyPair2 });
       await transactSupply({ pool, amount: amount1, outputs: [supplyUtxo2] });
 
       let poolATokenBalance = await aToken.balanceOf(pool.address);
-      let userBalance1 = await pool.getBalance(scaledAmount1);
-      let userBalance2 = await pool.getBalance(scaledAmount2);
+      let userBalance1 = await getUserBalance(scaledAmount1, pool);
+      let userBalance2 = await getUserBalance(scaledAmount2, pool);
       expect(poolATokenBalance).to.be.closeTo(userBalance1.add(userBalance2), TOLERANCE);
 
       await time.increase(1000 * ONE_DAY);
 
       poolATokenBalance = await aToken.balanceOf(pool.address);
-      userBalance1 = await pool.getBalance(scaledAmount1);
-      userBalance2 = await pool.getBalance(scaledAmount2);
+      userBalance1 = await getUserBalance(scaledAmount1, pool);
+      userBalance2 = await getUserBalance(scaledAmount2, pool);
       expect(poolATokenBalance).to.be.closeTo(userBalance1.add(userBalance2), TOLERANCE);
     }).timeout(80000);
 
@@ -118,18 +128,18 @@ describe('Pool', function () {
       const { pool, token, aToken } = await loadFixture(fixture);
 
       const keyPair1 = KeyPair.createRandom();
-      const amount1 = utils.parseEther('1');
-      const [scaledAmount1] = await pool.getAaveScaledAmountAdjusted(amount1, DELTA_SEC);
+      const amount1 = parseEther('1');
+      const scaledAmount1 = await getScaledAmount(amount1, pool);
       const supplyUtxo1 = new Utxo({ scaledAmount: scaledAmount1, keyPair: keyPair1 });
 
       const keyPair2 = KeyPair.createRandom();
-      const amount2 = utils.parseEther('1');
-      const [scaledAmount2] = await pool.getAaveScaledAmountAdjusted(amount2, DELTA_SEC);
+      const amount2 = parseEther('1');
+      const scaledAmount2 = await getScaledAmount(amount2, pool);
       const supplyUtxo2 = new Utxo({ scaledAmount: scaledAmount2, keyPair: keyPair2 });
 
       const keyPair3 = KeyPair.createRandom();
-      const amount3 = utils.parseEther('1');
-      const [scaledAmount3] = await pool.getAaveScaledAmountAdjusted(amount3, DELTA_SEC);
+      const amount3 = parseEther('1');
+      const scaledAmount3 = await getScaledAmount(amount3, pool);
       const supplyUtxo3 = new Utxo({ scaledAmount: scaledAmount3, keyPair: keyPair3 });
 
       await transactSupply({ pool, amount: amount1, outputs: [supplyUtxo1] });
@@ -137,9 +147,9 @@ describe('Pool', function () {
       await transactSupply({ pool, amount: amount3, outputs: [supplyUtxo3] });
 
       let poolATokenBalance = await aToken.balanceOf(pool.address);
-      let userBalance1 = await pool.getBalance(scaledAmount1);
-      let userBalance2 = await pool.getBalance(scaledAmount2);
-      let userBalance3 = await pool.getBalance(scaledAmount3);
+      let userBalance1 = await getUserBalance(scaledAmount1, pool);
+      let userBalance2 = await getUserBalance(scaledAmount2, pool);
+      let userBalance3 = await getUserBalance(scaledAmount3, pool);
       expect(poolATokenBalance).to.be.closeTo(
         userBalance1.add(userBalance2).add(userBalance3),
         TOLERANCE
@@ -148,9 +158,9 @@ describe('Pool', function () {
       await mine(100000);
 
       poolATokenBalance = await aToken.balanceOf(pool.address);
-      userBalance1 = await pool.getBalance(scaledAmount1);
-      userBalance2 = await pool.getBalance(scaledAmount2);
-      userBalance3 = await pool.getBalance(scaledAmount3);
+      userBalance1 = await getUserBalance(scaledAmount1, pool);
+      userBalance2 = await getUserBalance(scaledAmount2, pool);
+      userBalance3 = await getUserBalance(scaledAmount3, pool);
       expect(poolATokenBalance).to.be.closeTo(
         userBalance1.add(userBalance2).add(userBalance3),
         TOLERANCE
@@ -163,10 +173,10 @@ describe('Pool', function () {
       const { pool, token, aToken } = await loadFixture(fixture);
 
       const keyPair = KeyPair.createRandom();
-      const amount = utils.parseEther('1');
+      const amount = parseEther('1');
       const recipient = randomHex(20);
 
-      let [scaledAmount] = await pool.getAaveScaledAmountAdjusted(amount, DELTA_SEC);
+      const scaledAmount = await getScaledAmount(amount, pool);
 
       const supplyUtxo = new Utxo({ scaledAmount, keyPair });
       await transactSupply({ pool, amount, outputs: [supplyUtxo] });
@@ -174,7 +184,7 @@ describe('Pool', function () {
       await time.increase(1000 * ONE_DAY);
 
       const withdrawScaledAmount = scaledAmount;
-      const withdrawAmount = await pool.getBalance(withdrawScaledAmount);
+      const withdrawAmount = await getUserBalance(withdrawScaledAmount, pool);
       const withdrawUtxo = new Utxo({
         scaledAmount: scaledAmount.sub(withdrawScaledAmount),
         keyPair,
@@ -195,10 +205,10 @@ describe('Pool', function () {
       const { pool, token, aToken } = await loadFixture(fixture);
 
       const keyPair = KeyPair.createRandom();
-      const amount = utils.parseEther('1');
+      const amount = parseEther('1');
       const recipient = randomHex(20);
 
-      let [scaledAmount] = await pool.getAaveScaledAmountAdjusted(amount, DELTA_SEC);
+      const scaledAmount = await getScaledAmount(amount, pool);
 
       const supplyUtxo1 = new Utxo({ scaledAmount, keyPair });
       const supplyUtxo2 = new Utxo({ scaledAmount, keyPair });
@@ -209,7 +219,7 @@ describe('Pool', function () {
 
       const totalScaledBalance = scaledAmount.mul(2);
       const withdrawScaledAmount = totalScaledBalance;
-      const withdrawAmount = await pool.getBalance(withdrawScaledAmount);
+      const withdrawAmount = await getUserBalance(withdrawScaledAmount, pool);
       const withdrawUtxo = new Utxo({
         scaledAmount: totalScaledBalance.sub(withdrawScaledAmount),
         keyPair,
@@ -230,10 +240,10 @@ describe('Pool', function () {
       const { pool, token, aToken } = await loadFixture(fixture);
 
       const keyPair = KeyPair.createRandom();
-      const amount = utils.parseEther('1');
+      const amount = parseEther('1');
       const recipient = randomHex(20);
 
-      let [scaledAmount] = await pool.getAaveScaledAmountAdjusted(amount, DELTA_SEC);
+      let scaledAmount = await getScaledAmount(amount, pool);
 
       const supplyUtxo = new Utxo({ scaledAmount, keyPair });
       await transactSupply({ pool, amount, outputs: [supplyUtxo] });
@@ -242,7 +252,7 @@ describe('Pool', function () {
 
       // First Withdraw
       const scaledWithdrawAmount1 = scaledAmount.div(3);
-      const withdrawAmount1 = await pool.getBalance(scaledWithdrawAmount1);
+      const withdrawAmount1 = await getUserBalance(scaledWithdrawAmount1, pool);
       const withdrawUtxo1 = new Utxo({
         scaledAmount: scaledAmount.sub(scaledWithdrawAmount1),
         keyPair,
@@ -263,7 +273,7 @@ describe('Pool', function () {
       // Second Withdraw
       scaledAmount = scaledAmount.sub(scaledWithdrawAmount1);
       const scaledWithdrawAmount2 = scaledAmount.div(2);
-      const withdrawAmount2 = await pool.getBalance(scaledWithdrawAmount2);
+      const withdrawAmount2 = await getUserBalance(scaledWithdrawAmount2, pool);
       const withdrawUtxo2 = new Utxo({
         scaledAmount: scaledAmount.sub(scaledWithdrawAmount2),
         keyPair,
@@ -286,7 +296,7 @@ describe('Pool', function () {
       const { pool, token, aToken } = await loadFixture(fixture);
 
       const keyPairAlice = KeyPair.createRandom();
-      const supplyAmount = utils.parseEther('1');
+      const supplyAmount = parseEther('1');
       const [supplyScaledAmount] = await pool.getAaveScaledAmountAdjusted(ONE_ETHER, DELTA_SEC);
 
       const supplyUtxo = new Utxo({ scaledAmount: supplyScaledAmount, keyPair: keyPairAlice });

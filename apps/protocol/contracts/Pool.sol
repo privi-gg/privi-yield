@@ -1,20 +1,32 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "./interfaces/IVerifier.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IAavePool.sol";
 import "./interfaces/IAavePoolAddressProvider.sol";
 import "./interfaces/IAToken.sol";
 import "./MerkleTree.sol";
-import {TxType, ProofArgs, ExtData, AaveReserveData} from "./libraries/DataTypes.sol";
+import "./base/Compliance.sol";
+import {TxType, ProofArgs, ExtData, AaveReserveData} from "./helpers/DataTypes.sol";
 import {WadRayMath} from "./libraries/WadRayMath.sol";
 import {MathUtils} from "./libraries/MathUtils.sol";
 
-contract Pool is IPool, MerkleTree, ReentrancyGuard {
+contract Pool is
+    IPool,
+    Initializable,
+    UUPSUpgradeable,
+    OwnableUpgradeable,
+    MerkleTree,
+    Compliance,
+    ReentrancyGuardUpgradeable
+{
     using WadRayMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -30,21 +42,31 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
 
     constructor(
         uint32 numLevels_,
-        uint256 maxSupplyAmount_,
         IERC20 token_,
         IAavePoolAddressProvider aavePoolAddressProvider_,
         address hasher_,
         IVerifier verifier2_,
-        IVerifier verifier16_
-    ) MerkleTree(numLevels_, hasher_) {
-        maxSupplyAmount = maxSupplyAmount_;
+        IVerifier verifier16_,
+        address sanctionsList_
+    ) MerkleTree(numLevels_, hasher_) Compliance(sanctionsList_) {
         token = token_;
         aavePoolAddressProvider = aavePoolAddressProvider_;
         verifier2 = verifier2_;
         verifier16 = verifier16_;
     }
 
-    function supply(ProofArgs calldata args, ExtData calldata extData) external returns (uint256) {
+    function initialize(uint256 maxSupplyAmount_) external initializer {
+        maxSupplyAmount = maxSupplyAmount_;
+        __MerkleTree_init();
+        __Ownable_init();
+        __UUPSUpgradeable_init();
+        __ReentrancyGuard_init();
+    }
+
+    function supply(
+        ProofArgs calldata args,
+        ExtData calldata extData
+    ) external onlyNonSanctioned returns (uint256) {
         (address aavePoolAddress, , uint256 nextLiquidityIndex) = getAavePoolAndReserveData();
 
         uint256 supplyAmount = extData.scaledAmount.rayMul(nextLiquidityIndex);
@@ -62,10 +84,10 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
         return supplyAmount;
     }
 
-    function withdraw(ProofArgs calldata args, ExtData calldata extData)
-        external
-        returns (uint256)
-    {
+    function withdraw(
+        ProofArgs calldata args,
+        ExtData calldata extData
+    ) external onlyNonSanctioned returns (uint256) {
         if (extData.recipient == address(0)) revert ZeroRecipientAddress();
 
         _transact(args, extData, TxType.WITHDRAW);
@@ -92,7 +114,10 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
         return withdrawAmount;
     }
 
-    function transfer(ProofArgs calldata args, ExtData calldata extData) external {
+    function transfer(
+        ProofArgs calldata args,
+        ExtData calldata extData
+    ) external onlyNonSanctioned {
         _transact(args, extData, TxType.TRANSFER);
 
         if (extData.scaledFee > 0) {
@@ -115,11 +140,7 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
     function getAavePoolAndReserveData()
         public
         view
-        returns (
-            address,
-            AaveReserveData memory,
-            uint256
-        )
+        returns (address, AaveReserveData memory, uint256)
     {
         address aavePoolAddress = aavePoolAddressProvider.getPool();
         AaveReserveData memory reserveData = IAavePool(aavePoolAddress).getReserveData(
@@ -139,51 +160,6 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
         return IAavePool(aavePoolAddress).getReserveNormalizedIncome(address(token));
     }
 
-    function getBalance(uint256 scaledAmount) public view returns (uint256) {
-        uint256 normalizedIncome = getAaveReserveNormalizedIncome();
-        uint256 balance = scaledAmount.rayMul(normalizedIncome);
-        return balance;
-    }
-
-    function getAaveNextLiquidityIndex() public view returns (uint256) {
-        (, , uint256 nextLiquidityIndex) = getAavePoolAndReserveData();
-        return nextLiquidityIndex;
-    }
-
-    function getAaveScaledAmount(uint256 amount) public view returns (uint256) {
-        address aavePoolAddress = aavePoolAddressProvider.getPool();
-        AaveReserveData memory reserveData = IAavePool(aavePoolAddress).getReserveData(
-            address(token)
-        );
-        uint256 cumulatedLiquidityInterest = MathUtils.calculateLinearInterest(
-            reserveData.currentLiquidityRate,
-            reserveData.lastUpdateTimestamp
-        );
-        uint256 nextLiquidityIndex = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
-        uint256 scaledAmount = amount.rayDiv(nextLiquidityIndex);
-
-        return scaledAmount;
-    }
-
-    function getAaveScaledAmountAdjusted(uint256 amount, uint256 deltaSec)
-        public
-        view
-        returns (uint256, uint256)
-    {
-        address aavePoolAddress = aavePoolAddressProvider.getPool();
-        AaveReserveData memory reserveData = IAavePool(aavePoolAddress).getReserveData(
-            address(token)
-        );
-        uint256 cumulatedLiquidityInterest = MathUtils.calculateLinearInterestAdjusted(
-            reserveData.currentLiquidityRate,
-            reserveData.lastUpdateTimestamp,
-            deltaSec
-        );
-        uint256 nextLiquidityIndex = cumulatedLiquidityInterest.rayMul(reserveData.liquidityIndex);
-        uint256 scaledAmount = amount.rayDiv(nextLiquidityIndex);
-        return (scaledAmount, nextLiquidityIndex);
-    }
-
     function isSpent(bytes32 nullifierHash) public view returns (bool) {
         return nullifierHashes[nullifierHash];
     }
@@ -193,10 +169,6 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
         uint256 extScaledAmount,
         uint256 scaledFee
     ) public pure returns (uint256) {
-        if (txType == TxType.SUPPLY) {
-            require(extScaledAmount >= scaledFee, "Ext amount less than scaledFee");
-        }
-
         uint256 publicScaledAmount;
 
         if (txType == TxType.SUPPLY) {
@@ -204,7 +176,7 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
         } else if (txType == TxType.WITHDRAW) {
             publicScaledAmount = FIELD_SIZE - (extScaledAmount + scaledFee);
         } else if (txType == TxType.TRANSFER) {
-            publicScaledAmount = scaledFee;
+            publicScaledAmount = scaledFee == 0 ? 0 : (FIELD_SIZE - scaledFee);
         } else {
             revert("Invalid TxType");
         }
@@ -318,4 +290,6 @@ contract Pool is IPool, MerkleTree, ReentrancyGuard {
             emit NullifierUsed(args.inputNullifiers[i]);
         }
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }

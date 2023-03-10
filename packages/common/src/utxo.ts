@@ -1,6 +1,7 @@
 import { BigNumber, type BigNumberish } from 'ethers';
+import { poseidonHash, randomBN } from 'privi-utils';
+import { toFixedBuffer } from './helpers';
 import { KeyPair } from './keyPair';
-import { poseidonHash, randomBN, toFixedBuffer } from './helpers';
 
 export class Utxo {
   scaledAmount: BigNumber;
@@ -13,7 +14,7 @@ export class Utxo {
   constructor({
     scaledAmount,
     keyPair,
-    blinding = randomBN(),
+    blinding = randomBN(31),
     leafIndex,
   }: {
     scaledAmount: BigNumberish;

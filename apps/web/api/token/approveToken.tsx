@@ -5,7 +5,6 @@ import logger from 'utils/logger';
 import { erc20ABI, useContractWrite, useWaitForTransaction } from 'wagmi';
 
 interface ApproveTokensInput {
-  // owner: `0x${string}`;
   spender: `0x${string}`;
   value: BigNumber;
 }

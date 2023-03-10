@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
-import {ProofArgs, ExtData, AaveReserveData} from "../libraries/DataTypes.sol";
+pragma solidity 0.8.19;
+import {ProofArgs, ExtData, AaveReserveData} from "../helpers/DataTypes.sol";
 
 interface IWTokenGateway {
     error NotEnoughTokensSent(uint256 sent, uint256 required);
