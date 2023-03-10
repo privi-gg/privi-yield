@@ -3,21 +3,21 @@ import aavePool from 'abi/aavePool.json';
 import { BN } from 'privi-utils';
 
 interface AssetAPYQueryInput {
-  pool?: `0x${string}`;
-  asset?: `0x${string}`;
+  aavePool?: `0x${string}`;
+  token?: `0x${string}`;
 }
 
 const RAY = BN('1000000000000000000000000000'); // 10**27
 const SECONDS_PER_YEAR = 31536000;
 
-export const useGetAssetAPY = ({ pool, asset }: AssetAPYQueryInput) => {
-  const contract = { address: '0x794a61358D6845594F94dc1DB02A252b5b4814aD', abi: aavePool.abi };
+export const useGetAssetAPY = ({ aavePool: aavePoolAddress, token }: AssetAPYQueryInput) => {
+  const contract = { address: aavePoolAddress, abi: aavePool.abi };
 
   const { data, ...rest } = useContractRead({
     ...contract,
     functionName: 'getReserveData',
-    args: [asset],
-    enabled: !!pool && !!asset,
+    args: [token],
+    enabled: !!aavePoolAddress && !!token,
   });
 
   let apy;

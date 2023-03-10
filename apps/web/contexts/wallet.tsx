@@ -9,15 +9,15 @@ import fonts from 'theme/fonts';
 import { defaultChainId } from 'config/network';
 
 const defaultChains: Chain[] = [
-  { ...polygon, iconUrl: '/images/matic.png' },
+  { ...goerli, iconUrl: '/images/eth.png' },
   // { ...polygonMumbai, iconUrl: '/images/matic.png' },
-  // { ...goerli, iconUrl: '/images/eth.png' },
+  // { ...polygon, iconUrl: '/images/matic.png' },
 ];
 
 const { chains, provider } = configureChains(defaultChains, [
-  alchemyProvider({ apiKey: keyAlchemyPolygonMainnet }),
+  alchemyProvider({ apiKey: keyAlchemyGoerli }),
   // alchemyProvider({ apiKey: keyAlchemyPolygonMumbai }),
-  // alchemyProvider({ apiKey: keyAlchemyGoerli }),
+  // alchemyProvider({ apiKey: keyAlchemyPolygonMainnet }),
 ]);
 
 const { connectors } = getDefaultWallets({

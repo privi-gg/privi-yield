@@ -1,10 +1,10 @@
 import { FC } from 'react';
 import { HStack, Box, VStack, StackProps } from '@chakra-ui/react';
 import SupplyAssetItem from './SupplyAssetItem';
-import useInstance from 'hooks/instance';
+import { useInstance } from 'contexts/instance';
 
 const SupplyAssetsList: FC<StackProps> = ({ ...props }) => {
-  const { instances } = useInstance();
+  const { instances, aavePool } = useInstance();
   return (
     <VStack alignItems="stretch" spacing={4} {...props}>
       <HStack justify="space-between" px={8} fontWeight="bold" textAlign="center">
@@ -17,7 +17,7 @@ const SupplyAssetsList: FC<StackProps> = ({ ...props }) => {
         {Object.keys(instances)
           // .slice(0, 1)
           .map((token) => (
-            <SupplyAssetItem key={token} instance={instances[token]} />
+            <SupplyAssetItem key={token} aavePool={aavePool} instance={instances[token]} />
           ))}
       </VStack>
     </VStack>

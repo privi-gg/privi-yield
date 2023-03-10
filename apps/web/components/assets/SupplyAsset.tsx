@@ -12,7 +12,7 @@ import { isDev } from 'config/env';
 import { useUI } from 'contexts/ui';
 import useToast from 'hooks/toast';
 import { Instance } from 'config/network';
-import { useApproveToken, useGetTokenAllowance } from 'api/asset';
+import { useApproveToken, useGetTokenAllowance } from 'api/token';
 import { BigNumber } from 'ethers';
 
 const schema = yup.object().shape({

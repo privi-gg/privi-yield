@@ -16,11 +16,12 @@ import {
 } from '@chakra-ui/react';
 import { Control, useController } from 'react-hook-form';
 import { TokenPriceText } from 'components/common';
-import { useGetTokenBalance } from 'api/asset';
+import { useGetTokenBalance } from 'api/token';
 import { useAccount } from 'wagmi';
 import { constants } from 'ethers';
 import { formatUnits, parseUnits } from 'privi-utils';
 import { Instance } from 'config/network';
+import { useInstance } from 'contexts/instance';
 
 interface FormSupplyAmountInputProps extends FormControlProps {
   instance: Instance;
@@ -59,7 +60,7 @@ const FormSupplyAmountInput: FC<FormSupplyAmountInputProps> = ({
   const error = path(['errors', ...parseErrorKeys(name), 'message'], formState) as string;
 
   const { address } = useAccount();
-  const { data } = useGetTokenBalance({ address, tokenAddress: constants.AddressZero });
+  const { data } = useGetTokenBalance({ address, tokenAddress: instance.token.address as any });
 
   const setMaxAmount = () => {
     const max = formatUnits(data?.value || 0, 18);

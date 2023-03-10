@@ -11,15 +11,14 @@ export const useERC20TokenBalance = ({ address, tokenAddress }: TokenBalanceQuer
   const contract = { address: tokenAddress, abi: erc20ABI };
   const { data, ...rest } = useContractReads({
     contracts: [
-      { ...contract, functionName: 'balanceOf', functionArgs: [address] },
+      { ...contract, functionName: 'balanceOf', args: [address as any] },
       { ...contract, functionName: 'decimals' },
       { ...contract, functionName: 'symbol' },
     ],
-    enabled: !!address && !!tokenAddress,
+    enabled: !!address && !!tokenAddress && tokenAddress !== constants.AddressZero,
   });
 
   let balanceData;
-
   if (data?.[0]) {
     const value = BigNumber.from(data[0]);
     const decimals = BigNumber.from(data[1]).toNumber();

@@ -1,47 +1,37 @@
 import { useRouter } from 'next/router';
-import { Button, Flex, FlexProps, HStack, Text } from '@chakra-ui/react';
-import { AccountRegisterButton } from 'components/account';
+import { Flex, FlexProps, HStack, Text } from '@chakra-ui/react';
 import { APP_NAME, ROUTES } from 'config/constants';
-import { useShieldedAccount } from 'contexts/shieldedAccount';
-import { useUI } from 'contexts/ui';
 import Logo from '../Logo';
-import { ConnectWalletButton, WalletAddressButton } from 'components/wallet';
+import {
+  ConnectedChainButton,
+  ConnectedAddressButton,
+  ConnectWalletButton,
+} from 'components/wallet';
 import { useAccount } from 'wagmi';
 
 const Header: React.FC<FlexProps> = ({ ...props }) => {
-  const { setModalViewAndOpen } = useUI();
-  const { isLoggedIn, logOut } = useShieldedAccount();
-  const { address } = useAccount();
+  const { isConnected } = useAccount();
 
   const router = useRouter();
 
-  const handleLogIn = () => {
-    if (isLoggedIn) {
-      logOut();
-      return;
-    }
-    setModalViewAndOpen('ACCOUNT_LOGIN');
-  };
   return (
     <Flex px={16} py={4} justify="space-between" {...props}>
       <HStack spacing={4}>
-        <HStack spacing={4} onClick={() => router.push(ROUTES.HOME)} cursor="pointer">
+        <HStack onClick={() => router.push(ROUTES.HOME)} cursor="pointer">
           <Logo />
-          <Text color="primary.500" fontSize="2xl" fontWeight="bold">
+          <Text color="primary.500" fontSize="2xl" fontWeight="bold" pl={2}>
             {APP_NAME}
+          </Text>
+          <Text fontSize="sm" rounded="md" bgColor="gray.100" color="gray.500" px={1}>
+            BETA
           </Text>
         </HStack>
       </HStack>
 
-      <HStack spacing={8}>
-        <HStack>
-          <ConnectWalletButton />
-          {address && <WalletAddressButton />}
-        </HStack>
-        <Button colorScheme="gray" onClick={handleLogIn}>
-          {!isLoggedIn ? `Log In` : `Log Out`}
-        </Button>
-        <AccountRegisterButton />
+      <HStack spacing={4}>
+        {!isConnected && <ConnectWalletButton />}
+        {isConnected && <ConnectedChainButton />}
+        {isConnected && <ConnectedAddressButton />}
       </HStack>
     </Flex>
   );

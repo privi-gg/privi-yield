@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { TextProps, Text } from '@chakra-ui/react';
 import { useAccount } from 'wagmi';
-import { useGetTokenBalance } from 'api/asset';
+import { useGetTokenBalance } from 'api/token';
 import { constants } from 'ethers';
 import { Instance } from 'config/network';
 

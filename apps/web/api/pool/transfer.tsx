@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useContractWrite, useWaitForTransaction } from 'wagmi';
 import { BN } from 'privi-utils';
 import pool from 'abi/pool.json';
-import useInstance from 'hooks/instance';
+import { useInstance } from 'contexts/instance';
 import logger from 'utils/logger';
 
 export const usePoolTransfer = () => {

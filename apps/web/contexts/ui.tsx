@@ -1,3 +1,4 @@
+import { ModalProps } from '@chakra-ui/react';
 import React, {
   useReducer,
   useMemo,
@@ -6,6 +7,8 @@ import React, {
   FC,
   PropsWithChildren,
 } from 'react';
+
+type ModalConfig = Partial<ModalProps>;
 
 interface State {
   modalView: string;
@@ -20,6 +23,7 @@ export const modalViews = {
   SUPPLY_ASSET_NATIVE: 'SUPPLY_ASSET_NATIVE',
   WITHDRAW_ASSET: 'WITHDRAW_ASSET',
   WITHDRAW_ASSET_NATIVE: 'WITHDRAW_ASSET_NATIVE',
+  NETWORK_SWITCH: 'NETWORK_SWITCH',
 };
 
 type ModalView = keyof typeof modalViews;
@@ -38,6 +42,10 @@ type Action =
   | {
       type: 'SET_MODAL_DATA';
       data: any;
+    }
+  | {
+      type: 'SET_MODAL_CONFIG';
+      config: ModalConfig;
     };
 
 const initialState: State = {
@@ -59,6 +67,8 @@ const uiReducer = (state: State, action: Action) => {
       return { ...state, isModalOpen: false };
     case 'SET_MODAL_DATA':
       return { ...state, modalData: action.data };
+    case 'SET_MODAL_CONFIG':
+      return { ...state, modalConfig: action.config };
     default:
       return state;
   }
@@ -68,7 +78,10 @@ export const UIProvider: FC<PropsWithChildren> = (props) => {
   const [state, dispatch] = useReducer(uiReducer, initialState);
 
   const openModal = () => dispatch({ type: 'OPEN_MODAL' });
-  const closeModal = () => dispatch({ type: 'CLOSE_MODAL' });
+  const closeModal = () => {
+    dispatch({ type: 'CLOSE_MODAL' });
+    setModalConfig({});
+  };
   const setModalView = (view: ModalView) => dispatch({ type: 'SET_MODAL_VIEW', view });
   const setModalData = (data: any) => {
     dispatch({ type: 'SET_MODAL_DATA', data });
@@ -76,6 +89,9 @@ export const UIProvider: FC<PropsWithChildren> = (props) => {
   const setModalViewAndOpen = (view: ModalView) => {
     setModalView(view);
     openModal();
+  };
+  const setModalConfig = (config: ModalConfig) => {
+    dispatch({ type: 'SET_MODAL_CONFIG', config });
   };
 
   const value = useMemo(
@@ -86,6 +102,7 @@ export const UIProvider: FC<PropsWithChildren> = (props) => {
       setModalView,
       setModalData,
       setModalViewAndOpen,
+      setModalConfig,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state]

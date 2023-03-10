@@ -9,6 +9,7 @@ import { prepareSupplyProof } from 'utils/proof';
 import { fetchUserShieldedAccount } from 'utils/pool';
 import { useShieldedAccount } from 'contexts/shieldedAccount';
 import { testPrivateKey } from 'config/env';
+import { getScaledAmount } from '@privi-yield/common';
 
 const supplyDelta = parseEther('0.001');
 
@@ -20,9 +21,6 @@ export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
 
   const { data, error, writeAsync, ...rest } = useContractWrite({
     mode: 'recklesslyUnprepared',
-    // address: instance.instanceAddress,
-    // abi: pool.abi,
-    //@todo Generalize for non-native tokens
     address: poolContract.address,
     abi: pool.abi,
     functionName: 'supply',
@@ -38,8 +36,7 @@ export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
       throw new Error('Please login to supply');
     }
 
-    const scaledAmount = amount.sub(supplyDelta);
-    // const scaledAmount = amount;
+    const scaledAmount = await getScaledAmount(amount.sub(supplyDelta), poolContract);
     const recipientKeyPair = await fetchUserShieldedAccount(recipient, registrarContract);
     if (!recipientKeyPair) {
       throw new Error('Recipient shielded account not found');
@@ -55,8 +52,18 @@ export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
     return { proofArgs, extData };
   };
 
+  const verifyProof = async (proofArgs: any) => {
+    const isValid = await poolContract.verifyProof(proofArgs);
+    if (!isValid) {
+      throw new Error(`Invalid proof`);
+    }
+    logger.info(`Proof validated!`);
+  };
+
   const supplyAsync = async (amount: BigNumber, recipient: string) => {
     const { proofArgs, extData } = await generateProof(amount, recipient);
+
+    await verifyProof(proofArgs);
 
     await writeAsync?.({
       recklesslySetUnpreparedArgs: [proofArgs, extData],
@@ -68,18 +75,10 @@ export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
   const testAsync = async (amount: BigNumber, recipient: string) => {
     logger.info(`Simulating supply...`);
     const { proofArgs, extData } = await generateProof(amount, recipient);
+    await verifyProof(proofArgs);
+
     const testWallet = new Wallet(testPrivateKey, provider);
     const contract = poolContract.connect(testWallet);
-
-    // const tokenAddr = await poolContract.token();
-    // const tokenContract = new Contract(
-    //   '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
-    //   erc20ABI,
-    //   provider
-    // );
-    // const allowance = await tokenContract.allowance(testWallet.address, poolContract.address);
-    // console.log('allowance', allowance.toString());
-    // console.log('testPk', testWallet.address);
 
     try {
       const tx = await contract.callStatic.supply(proofArgs, extData, {
