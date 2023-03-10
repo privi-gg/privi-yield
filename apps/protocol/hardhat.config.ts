@@ -1,6 +1,7 @@
 import { HardhatUserConfig } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
 import 'hardhat-deploy';
+import '@openzeppelin/hardhat-upgrades';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -19,25 +20,25 @@ const forkBlock = {
 };
 
 const config: HardhatUserConfig = {
-  solidity: { compilers: [{ version: '0.8.17' }, { version: '0.6.11' }] },
+  solidity: { compilers: [{ version: '0.8.19' }, { version: '0.6.11' }] },
   defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
-      // forking: {
-      //   url: rpcGoerli,
-      //   blockNumber: forkBlock.goerli,
-      //   enabled: forkEnabled,
-      // },
+      forking: {
+        url: rpcGoerli,
+        blockNumber: forkBlock.goerli,
+        enabled: forkEnabled,
+      },
       // forking: {
       //   url: rpcPolygonMumbai,
       //   blockNumber: forkBlock.mumbai,
       //   enabled: forkEnabled,
       // },
-      forking: {
-        url: rpcPolygonMainnet,
-        blockNumber: forkBlock.polygon,
-        enabled: forkEnabled,
-      },
+      // forking: {
+      //   url: rpcPolygonMainnet,
+      //   blockNumber: forkBlock.polygon,
+      //   enabled: forkEnabled,
+      // },
     },
     polygon: {
       url: rpcPolygonMainnet,

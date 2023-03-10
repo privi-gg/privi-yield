@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./interfaces/IHasher.sol";
 import "./interfaces/IMerkleTree.sol";
-import {Errors} from "./libraries/Errors.sol";
 
-contract MerkleTree is IMerkleTree {
+contract MerkleTree is IMerkleTree, Initializable {
     uint256 public constant FIELD_SIZE =
         21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
     uint32 public constant ROOT_HISTORY_SIZE = 100;
 
-    uint256 public constant ZERO_LEAF = uint256(keccak256("privi")) % FIELD_SIZE;
+    uint256 public constant ZERO_LEAF = uint256(keccak256("privi-yield")) % FIELD_SIZE;
 
     IHasher public immutable hasher;
     uint256 public immutable numLevels;
@@ -24,14 +24,16 @@ contract MerkleTree is IMerkleTree {
     uint32 public nextLeafIndex;
 
     constructor(uint256 numLevels_, address hasher_) {
-        if (numLevels_ == 0 || numLevels_ >= 32) revert Errors.InvalidMerkleTreeDepth(numLevels_);
+        if (numLevels_ == 0 || numLevels_ >= 32) revert OutOfRangeMerkleTreeDepth(numLevels_);
 
         numLevels = numLevels_;
         hasher = IHasher(hasher_);
+    }
 
+    function __MerkleTree_init() internal onlyInitializing {
         // Calculate the zero nodes
         bytes32 zero = bytes32(ZERO_LEAF);
-        for (uint8 i = 0; i < numLevels_; ) {
+        for (uint8 i = 0; i < numLevels; ) {
             zeroes[i] = zero;
             filledSubtrees[i] = zero;
             zero = hashLeftRight(zero, zero);
@@ -45,8 +47,8 @@ contract MerkleTree is IMerkleTree {
     }
 
     function hashLeftRight(bytes32 left, bytes32 right) public view returns (bytes32) {
-        if (uint256(left) >= FIELD_SIZE) revert Errors.InputOutOfFieldSize(left);
-        if (uint256(right) >= FIELD_SIZE) revert Errors.InputOutOfFieldSize(right);
+        if (uint256(left) >= FIELD_SIZE) revert InputOutOfFieldSize(left);
+        if (uint256(right) >= FIELD_SIZE) revert InputOutOfFieldSize(right);
 
         bytes32[2] memory input;
         input[0] = left;
@@ -58,7 +60,7 @@ contract MerkleTree is IMerkleTree {
     function _insert(bytes32 leaf1, bytes32 leaf2) internal returns (uint32 index) {
         uint32 _nextIndex = nextLeafIndex;
 
-        if (_nextIndex >= 2**numLevels) revert Errors.MerkleTreeFull();
+        if (_nextIndex >= 2**numLevels) revert MerkleTreeFull();
 
         uint32 currentIndex = _nextIndex / 2;
 
@@ -112,4 +114,6 @@ contract MerkleTree is IMerkleTree {
     function getLastRoot() public view returns (bytes32) {
         return roots[currentRootIndex];
     }
+
+    uint256[46] __gap;
 }

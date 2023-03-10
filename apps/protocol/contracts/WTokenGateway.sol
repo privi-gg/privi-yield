@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IWToken.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IWTokenGateway.sol";
 import {WadRayMath} from "./libraries/WadRayMath.sol";
-import {ProofArgs, ExtData, AaveReserveData} from "./libraries/DataTypes.sol";
+import {ProofArgs, ExtData, AaveReserveData} from "./helpers/DataTypes.sol";
 
 contract WTokenGateway is IWTokenGateway {
     using WadRayMath for uint256;

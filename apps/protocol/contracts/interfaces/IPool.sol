@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
-import {ProofArgs, ExtData, AaveReserveData} from "../libraries/DataTypes.sol";
+import {ProofArgs, ExtData, AaveReserveData} from "../helpers/DataTypes.sol";
 
 interface IPool {
     event CommitmentInserted(bytes32 commitment, uint256 leafIndex, bytes encryptedOutput);
@@ -12,7 +12,6 @@ interface IPool {
     error InputNullifierAlreadySpent();
     error InvalidExtDataHash();
     error InvalidPublicScaledAmount();
-    error InvalidScaledAmount(uint256 scaledAmount);
     error ZeroRecipientAddress();
     error SupplyExceedsMaxLimit(uint256 amount, uint256 maxAmountAllowed);
 
@@ -27,9 +26,5 @@ interface IPool {
     function getAavePoolAndReserveData()
         external
         view
-        returns (
-            address,
-            AaveReserveData memory,
-            uint256
-        );
+        returns (address, AaveReserveData memory, uint256);
 }
