@@ -10,13 +10,13 @@ import { defaultChainId } from 'config/network';
 
 const defaultChains: Chain[] = [
   { ...goerli, iconUrl: '/images/eth.png' },
-  // { ...polygonMumbai, iconUrl: '/images/matic.png' },
+  { ...polygonMumbai, iconUrl: '/images/matic.png' },
   // { ...polygon, iconUrl: '/images/matic.png' },
 ];
 
 const { chains, provider } = configureChains(defaultChains, [
   alchemyProvider({ apiKey: keyAlchemyGoerli }),
-  // alchemyProvider({ apiKey: keyAlchemyPolygonMumbai }),
+  alchemyProvider({ apiKey: keyAlchemyPolygonMumbai }),
   // alchemyProvider({ apiKey: keyAlchemyPolygonMainnet }),
 ]);
 

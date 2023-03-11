@@ -130,8 +130,50 @@ const goerliConfig: InstanceConfig = {
   },
 };
 
+// #####################################
+// #     POLYGON MUMBAI INSTANCES      #
+// #####################################
+const mumbaiConfig: InstanceConfig = {
+  rpcUrl: rpcGoerli,
+  wTokenGateway: '0x3b796c331a5FD1fD84ebe387425fDC06995D9FFb',
+  registrar: '0x3212B94c51b32289083CeA861718faE3AaE8a02c',
+  aavePool: '0x0b913A76beFF3887d35073b8e5530755D60F78C7',
+  instances: {
+    matic: {
+      pool: '0x04E95858b85D4Ff13A262D78616F0D2165D7D994',
+      deployedBlock: 28876158,
+      treeHeight: 20,
+      zeroElement: ZERO_LEAF,
+      token: {
+        address: constants.AddressZero,
+        name: 'matic',
+        symbol: 'MATIC',
+        decimals: 18,
+        isNative: true,
+        iconUrl: '/images/matic.png',
+        wToken: '0xf237dE5664D3c2D2545684E76fef02A3A58A364c',
+      },
+    },
+    wmatic: {
+      pool: '0x04E95858b85D4Ff13A262D78616F0D2165D7D994',
+      deployedBlock: 28876158,
+      treeHeight: 20,
+      zeroElement: ZERO_LEAF,
+      token: {
+        address: '0xf237dE5664D3c2D2545684E76fef02A3A58A364c',
+        name: 'wmatic',
+        symbol: 'WMATIC',
+        decimals: 18,
+        isNative: false,
+        iconUrl: '/images/matic.png',
+      },
+    },
+  },
+};
+
 export const instanceConfig: Record<number, InstanceConfig> = {
   [chains.GOERLI]: goerliConfig,
+  [chains.POLYGON_MUMBAI]: mumbaiConfig,
   // [chains.POLYGON_MAINNET]: polygonMainnetConfig,
 };
 
