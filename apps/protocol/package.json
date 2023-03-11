@@ -15,14 +15,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@metamask/eth-sig-util": "^5.0.0",
     "@openzeppelin/contracts": "^4.7.3",
     "@openzeppelin/contracts-upgradeable": "^4.8.2",
     "circomlib": "^2.0.5",
     "cross-env": "^7.0.3",
     "dotenv": "^16.0.2",
-    "snarkjs": "^0.4.24",
-    "xcircomlib": "npm:circomlib@^0.5.5"
+    "snarkjs": "^0.4.24"
   },
   "devDependencies": {
     "@aave/math-utils": "^1.13.6",
