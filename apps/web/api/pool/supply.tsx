@@ -11,7 +11,7 @@ import { useShieldedAccount } from 'contexts/shieldedAccount';
 import { testPrivateKey } from 'config/env';
 import { getScaledAmount } from '@privi-yield/common';
 
-const supplyDelta = parseEther('0.001');
+const supplyDelta = parseEther('0.0001');
 
 export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
   const poolContract = usePoolContract({ poolAddress });
@@ -36,7 +36,12 @@ export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
       throw new Error('Please login to supply');
     }
 
-    const scaledAmount = await getScaledAmount(amount.sub(supplyDelta), poolContract);
+    const sendAmount = amount.sub(supplyDelta);
+    if (sendAmount.lte(0)) {
+      throw new Error('Amount is too small');
+    }
+    const scaledAmount = await getScaledAmount(sendAmount, poolContract);
+
     const recipientKeyPair = await fetchUserShieldedAccount(recipient, registrarContract);
     if (!recipientKeyPair) {
       throw new Error('Recipient shielded account not found');
@@ -67,7 +72,6 @@ export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
 
     await writeAsync?.({
       recklesslySetUnpreparedArgs: [proofArgs, extData],
-      //@todo Generalize for non-native tokens
       recklesslySetUnpreparedOverrides: { gasLimit: BN(2_000_000) },
     });
   };
