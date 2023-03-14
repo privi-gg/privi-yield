@@ -8,7 +8,7 @@ import { BigNumber, Wallet } from 'ethers';
 import { prepareWithdrawProof } from 'utils/proof';
 import { useShieldedAccount } from 'contexts/shieldedAccount';
 import { testPrivateKey } from 'config/env';
-import { getScaledAmount } from '@privi-yield/common';
+import { getAaveScaledAmountData } from '@privi-yield/common';
 
 export const usePoolWithdrawNative = ({ poolAddress }: { poolAddress: string }) => {
   const poolContract = usePoolContract({ poolAddress });
@@ -33,7 +33,7 @@ export const usePoolWithdrawNative = ({ poolAddress }: { poolAddress: string }) 
       throw new Error('Please login to withdraw');
     }
 
-    const scaledAmount = await getScaledAmount(amount, poolContract);
+    const { scaledAmount } = await getAaveScaledAmountData(amount, poolContract);
 
     const { proofArgs, extData } = await prepareWithdrawProof({
       pool: poolContract,
