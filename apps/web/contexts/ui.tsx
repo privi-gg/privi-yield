@@ -24,6 +24,7 @@ export const modalViews = {
   WITHDRAW_ASSET: 'WITHDRAW_ASSET',
   WITHDRAW_ASSET_NATIVE: 'WITHDRAW_ASSET_NATIVE',
   NETWORK_SWITCH: 'NETWORK_SWITCH',
+  SUPPLY_INFO: 'SUPPLY_INFO',
 };
 
 type ModalView = keyof typeof modalViews;
