@@ -9,9 +9,9 @@ import { prepareSupplyProof } from 'utils/proof';
 import { fetchUserShieldedAccount } from 'utils/pool';
 import { useShieldedAccount } from 'contexts/shieldedAccount';
 import { testPrivateKey } from 'config/env';
-import { getScaledAmount } from '@privi-yield/common';
+import { getAaveScaledAmountData } from '@privi-yield/common';
 
-const supplyDelta = parseEther('0.0001');
+const supplyDelta = parseEther('0.00001');
 
 export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
   const poolContract = usePoolContract({ poolAddress });
@@ -40,7 +40,7 @@ export const usePoolSupply = ({ poolAddress }: { poolAddress: string }) => {
     if (sendAmount.lte(0)) {
       throw new Error('Amount is too small');
     }
-    const scaledAmount = await getScaledAmount(sendAmount, poolContract);
+    const { scaledAmount } = await getAaveScaledAmountData(sendAmount, poolContract);
 
     const recipientKeyPair = await fetchUserShieldedAccount(recipient, registrarContract);
     if (!recipientKeyPair) {

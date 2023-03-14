@@ -25,11 +25,7 @@ const SupplyAssetItem: FC<SupplyAssetItemProps> = ({ aavePool, instance, ...prop
 
   const handleSupply = () => {
     setModalData({ instance });
-    if (instance.token.isNative) {
-      setModalViewAndOpen(modalViews.SUPPLY_ASSET_NATIVE);
-    } else {
-      setModalViewAndOpen(modalViews.SUPPLY_ASSET);
-    }
+    setModalViewAndOpen(modalViews.SUPPLY_INFO);
   };
 
   const handleWithdraw = () => {

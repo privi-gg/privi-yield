@@ -5,6 +5,7 @@ import {
   WithdrawAsset,
   SupplyAssetNative,
   WithdrawAssetNative,
+  SupplyInfo,
 } from 'components/assets';
 import { NetworkSwitch } from 'components/wallet';
 
@@ -25,6 +26,7 @@ const ManagedModal: React.FC = () => {
           {modalView === modalViews.WITHDRAW_ASSET && <WithdrawAsset />}
           {modalView === modalViews.WITHDRAW_ASSET_NATIVE && <WithdrawAssetNative />}
           {modalView === modalViews.NETWORK_SWITCH && <NetworkSwitch />}
+          {modalView === modalViews.SUPPLY_INFO && <SupplyInfo />}
         </ModalBody>
       </ModalContent>
     </Modal>

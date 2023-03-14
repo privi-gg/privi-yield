@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { BigNumber, Contract } from 'ethers';
-import { getUserBalance, KeyPair, Utxo } from '@privi-yield/common';
+import { getAaveUserBalanceData, KeyPair, Utxo } from '@privi-yield/common';
 import { fetchUserUnspentNotes } from 'utils/pool';
 import { usePoolContract } from 'hooks/contracts';
 
@@ -12,7 +12,7 @@ export async function getShieldedBalance(keyPair: KeyPair, pool: Contract) {
     BigNumber.from(0)
   );
 
-  const balance: BigNumber = await getUserBalance(scaledBalance, pool);
+  const { balance } = await getAaveUserBalanceData(scaledBalance, pool);
 
   return {
     balance,
