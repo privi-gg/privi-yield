@@ -8,10 +8,11 @@ import {
   TREE_HEIGHT,
 } from './helpers/constants';
 import { deployHasher } from './helpers/hasher';
-import { getScaledAmount, KeyPair, Utxo } from '@privi-yield/common';
+import { getAaveScaledAmountData, KeyPair, Utxo } from '@privi-yield/common';
 import { prepareSupplyProof, prepareWithdrawProof } from './helpers/proofs';
 import { parseEther, randomHex } from 'privi-utils';
-
+import { rayDiv, rayMul } from '@aave/math-utils';
+import { BigNumber } from 'ethers';
 const { utils } = ethers;
 
 const aavePoolAddressProviderArtifact = artifacts.readArtifactSync('IAavePoolAddressProvider');
@@ -67,7 +68,8 @@ describe.only('WTokenGateway', function () {
 
     const keyPair = KeyPair.createRandom();
     const amount = utils.parseEther('1');
-    const scaledAmount = await getScaledAmount(amount, pool);
+    const { scaledAmount } = await getAaveScaledAmountData(amount, pool);
+
     const supplyUtxo = new Utxo({ scaledAmount, keyPair });
 
     const { proofArgs, extData } = await prepareSupplyProof({
@@ -88,7 +90,7 @@ describe.only('WTokenGateway', function () {
 
     const keyPair = KeyPair.createRandom();
     const supplyAmount = utils.parseEther('1');
-    const supplyScaledAmount = await getScaledAmount(supplyAmount, pool);
+    const { scaledAmount: supplyScaledAmount } = await getAaveScaledAmountData(supplyAmount, pool);
     const supplyUtxo = new Utxo({ scaledAmount: supplyScaledAmount, keyPair });
 
     const { proofArgs, extData } = await prepareSupplyProof({
